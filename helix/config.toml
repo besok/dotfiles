@@ -1,0 +1,56 @@
+theme = "catppuccin_latte"
+
+[editor]
+line-number = "relative"
+mouse = true
+bufferline = "multiple"
+color-modes = true
+cursorline = true
+true-color = true
+rulers = [88, 100]
+idle-timeout = 200
+completion-trigger-len = 1
+auto-completion = true
+auto-format = true
+auto-save = false
+default-line-ending = "lf"
+
+[editor.cursor-shape]
+insert = "bar"
+normal = "block"
+select = "underline"
+
+[editor.indent-guides]
+render = true
+character = "│"
+skip-levels = 1
+
+[editor.lsp]
+display-messages = true
+display-inlay-hints = true
+auto-signature-help = true
+
+[editor.statusline]
+left = ["mode", "spinner", "file-name", "file-modification-indicator"]
+center = []
+right = ["diagnostics", "selections", "position", "file-encoding", "file-line-ending", "file-type"]
+
+[editor.whitespace.render]
+space = "none"
+tab = "all"
+newline = "none"
+
+[editor.file-picker]
+hidden = false
+
+[keys.normal]
+C-s = ":w"
+C-q = ":q"
+"space" = { "space" = "file_picker", "w" = ":w", "q" = ":q" }
+# Quick markdown render: pipes current file through glow in a pager.
+# Requires Helix >= 24.03 for the %{buffer_name} expansion; if your
+# version is older, use Ctrl-z to suspend and run `glow -p file.md` by hand.
+m = ":sh glow -p %{buffer_name}"
+
+[keys.insert]
+"C-s" = ["normal_mode", ":w"]

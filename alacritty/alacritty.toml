@@ -1,0 +1,87 @@
+[general]
+live_config_reload = true
+
+[window]
+padding = { x = 8, y = 8 }
+dynamic_padding = true
+decorations = "full"
+opacity = 1.0
+startup_mode = "Maximized"
+title = "Alacritty"
+
+[scrolling]
+history = 10000
+multiplier = 3
+
+[font]
+size = 12.0
+builtin_box_drawing = true
+
+[font.normal]
+family = "JetBrainsMono Nerd Font"
+style = "Regular"
+
+[font.bold]
+family = "JetBrainsMono Nerd Font"
+style = "Bold"
+
+[font.italic]
+family = "JetBrainsMono Nerd Font"
+style = "Italic"
+
+# Catppuccin Latte (light)
+[colors.primary]
+background = "#eff1f5"
+foreground = "#4c4f69"
+
+[colors.cursor]
+text = "#eff1f5"
+cursor = "#dc8a78"
+
+[colors.normal]
+black   = "#5c5f77"
+red     = "#d20f39"
+green   = "#40a02b"
+yellow  = "#df8e1d"
+blue    = "#1e66f5"
+magenta = "#ea76cb"
+cyan    = "#179299"
+white   = "#acb0be"
+
+[colors.bright]
+black   = "#6c6f85"
+red     = "#d20f39"
+green   = "#40a02b"
+yellow  = "#df8e1d"
+blue    = "#1e66f5"
+magenta = "#ea76cb"
+cyan    = "#179299"
+white   = "#bcc0cc"
+
+[cursor]
+style = { shape = "Beam", blinking = "On" }
+blink_interval = 600
+
+[terminal.shell]
+program = "/usr/bin/zellij"
+
+[keyboard]
+bindings = [
+  { key = "Return", mods = "Control|Shift", action = "SpawnNewInstance" },
+  { key = "Plus",  mods = "Control", action = "IncreaseFontSize" },
+  { key = "Minus", mods = "Control", action = "DecreaseFontSize" },
+  { key = "Key0",  mods = "Control", action = "ResetFontSize" },
+]
+
+[mouse]
+bindings = [
+  { mouse = "Right", action = "Paste" },
+]
+
+# Rings on terminal BEL (\a) — many CLI/agentic tools (LLM CLIs included)
+# emit this when they're done or waiting on you. See notify-bell.sh.
+[bell]
+animation = "EaseOutExpo"
+duration = 150
+color = "#dc8a78"
+command = { program = "/bin/sh", args = ["-c", "~/.config/alacritty/notify-bell.sh"] }

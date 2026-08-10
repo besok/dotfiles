@@ -1,0 +1,32 @@
+layout {
+    default_tab_template {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        children
+        pane size=2 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+    }
+
+    // Tab 1: editor on top, two shells side-by-side underneath.
+    // Left shell: whatever build/watch command fits the project
+    // (cargo watch -x run, zig build run, make, pytest -f, etc.)
+    // Right shell: free — use it however you like.
+    tab name="editor" focus=true {
+        pane split_direction="horizontal" {
+            pane command="hx" size="75%" {
+                args "."
+            }
+            pane split_direction="vertical" size="25%" {
+                pane name="build/watch"
+                pane name="scratch"
+            }
+        }
+    }
+
+    // Tab 2: LLM assistant CLI
+    tab name="llms" {
+        pane command="opencode"
+    }
+}

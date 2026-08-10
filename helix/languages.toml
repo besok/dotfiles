@@ -1,0 +1,102 @@
+# -----------------------------------------------------------------
+# Python — pyright (types) + ruff (lint & format)
+# -----------------------------------------------------------------
+[[language]]
+name = "python"
+language-servers = ["pyright", "ruff"]
+auto-format = true
+formatter = { command = "ruff", args = ["format", "-"] }
+
+[language-server.pyright]
+command = "pyright-langserver"
+args = ["--stdio"]
+
+[language-server.pyright.config.python.analysis]
+typeCheckingMode = "basic"
+autoImportCompletions = true
+
+[language-server.ruff]
+command = "ruff"
+args = ["server"]
+
+# -----------------------------------------------------------------
+# Rust — rust-analyzer, clippy-on-save, lldb-dap for debugging
+# -----------------------------------------------------------------
+[[language]]
+name = "rust"
+auto-format = true
+language-servers = ["rust-analyzer"]
+
+[language-server.rust-analyzer.config]
+check.command = "clippy"
+cargo.features = "all"
+inlayHints.bindingModeHints.enable = false
+inlayHints.closureReturnTypeHints.enable = true
+
+[language.debugger]
+name = "lldb-dap"
+transport = "stdio"
+command = "lldb-dap"
+
+[[language.debugger.templates]]
+name = "binary"
+request = "launch"
+completion = [ { name = "binary", completion = "filename" } ]
+args = { program = "{0}" }
+
+[[language.debugger.templates]]
+name = "binary (terminal)"
+request = "launch"
+completion = [ { name = "binary", completion = "filename" } ]
+args = { program = "{0}", runInTerminal = true }
+
+# -----------------------------------------------------------------
+# Zig — zls
+# -----------------------------------------------------------------
+[[language]]
+name = "zig"
+auto-format = true
+language-servers = ["zls"]
+formatter = { command = "zig", args = ["fmt", "--stdin"] }
+
+[language-server.zls]
+command = "zls"
+
+# -----------------------------------------------------------------
+# C / C++ — clangd (driven by compile_commands.json) + lldb-dap
+# -----------------------------------------------------------------
+[[language]]
+name = "cpp"
+auto-format = true
+language-servers = ["clangd"]
+
+[language.debugger]
+name = "lldb-dap"
+transport = "stdio"
+command = "lldb-dap"
+
+[[language.debugger.templates]]
+name = "binary"
+request = "launch"
+completion = [ { name = "binary", completion = "filename" } ]
+args = { program = "{0}" }
+
+[[language]]
+name = "c"
+auto-format = true
+language-servers = ["clangd"]
+
+[language.debugger]
+name = "lldb-dap"
+transport = "stdio"
+command = "lldb-dap"
+
+[[language.debugger.templates]]
+name = "binary"
+request = "launch"
+completion = [ { name = "binary", completion = "filename" } ]
+args = { program = "{0}" }
+
+[language-server.clangd]
+command = "clangd"
+args = ["--header-insertion=never", "--clang-tidy", "--background-index"]
