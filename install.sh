@@ -115,14 +115,13 @@ case "$PKG" in
 esac
 
 # -------------------------------------------------------------------
-# 4. Common build tooling + notification/markdown-preview helpers
+# 4. Common build tooling + markdown-preview helpers
 # -------------------------------------------------------------------
-echo "==> Installing common build tools + notify-send/glow/entr..."
+echo "==> Installing common build tools + glow/entr..."
 case "$PKG" in
-    brew)   install_pkgs git cmake llvm glow entr
-            echo "   (terminal-notifier is optional: brew install terminal-notifier — osascript works without it)" ;;
+    brew)   install_pkgs git cmake llvm glow entr ;;
     apt)    install_pkgs git cmake build-essential clang clangd clang-tidy \
-                          lldb libnotify-bin entr
+                          lldb entr
             if ! command -v glow >/dev/null 2>&1; then
                 echo "   Installing glow via Charm's apt repo..."
                 sudo mkdir -p /etc/apt/keyrings
@@ -130,7 +129,7 @@ case "$PKG" in
                 echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
                 sudo apt update && sudo apt install -y glow
             fi ;;
-    pacman) install_pkgs git cmake base-devel clang lldb glow entr libnotify ;;
+    pacman) install_pkgs git cmake base-devel clang lldb glow entr ;;
 esac
 
 if ! command -v lldb-dap >/dev/null 2>&1; then
@@ -194,12 +193,10 @@ mkdir -p "$CONFIG_HOME/helix" "$CONFIG_HOME/alacritty" "$CONFIG_HOME/zellij/layo
 ln -sf "$DOTFILES_DIR/helix/config.toml"        "$CONFIG_HOME/helix/config.toml"
 ln -sf "$DOTFILES_DIR/helix/languages.toml"     "$CONFIG_HOME/helix/languages.toml"
 ln -sf "$DOTFILES_DIR/alacritty/alacritty.toml" "$CONFIG_HOME/alacritty/alacritty.toml"
-ln -sf "$DOTFILES_DIR/alacritty/notify-bell.sh" "$CONFIG_HOME/alacritty/notify-bell.sh"
 ln -sf "$DOTFILES_DIR/zellij/config.kdl"        "$CONFIG_HOME/zellij/config.kdl"
 ln -sf "$DOTFILES_DIR/zellij/layouts/dev.kdl"   "$CONFIG_HOME/zellij/layouts/dev.kdl"
 ln -sf "$DOTFILES_DIR/scripts/mdp.sh"           "$LOCAL_BIN/mdp"
 
-chmod +x "$DOTFILES_DIR/alacritty/notify-bell.sh"
 if [[ -d "$DOTFILES_DIR/scripts" ]]; then
     chmod +x "$DOTFILES_DIR"/scripts/*.sh
 fi

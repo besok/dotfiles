@@ -109,8 +109,3 @@ bindings = [
   { mouse = "Right", action = "Paste" },
 ]
 
-[bell]
-animation = "EaseOutExpo"
-duration = 150
-color = "#dc8a78"
-command = { program = "/bin/sh", args = ["-c", "~/.config/alacritty/notify-bell.sh"] }
