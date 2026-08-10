@@ -34,6 +34,10 @@ auto-signature-help = true
 left = ["mode", "spinner", "file-name", "file-modification-indicator"]
 center = []
 right = ["diagnostics", "selections", "position", "file-encoding", "file-line-ending", "file-type"]
+separator = "│"
+mode.normal = "NORMAL"
+mode.insert = "INSERT"
+mode.select = "SELECT"
 
 [editor.whitespace.render]
 space = "none"

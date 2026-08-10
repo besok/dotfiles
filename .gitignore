@@ -1,0 +1,39 @@
+# System & OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Dynamic temporary & runtime logs
+*.log
+/tmp/
+
+# Helix editor state & temporary swap files
+.hx/
+*.swp
+*~
+
+# JetBrains IDEs (IntelliJ, PyCharm, CLion)
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+.idea_modules/
+
+# Tooling build / environment artifacts
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+target/
+zig-cache/
+zig-out/
+
+# Local secret or non-versioned config overrides
+*.local
+.env

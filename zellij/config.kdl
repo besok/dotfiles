@@ -1,5 +1,5 @@
 theme "catppuccin-latte"
-default_shell "zsh"
+default_shell "bash"
 pane_frames true
 default_layout "dev"
 mouse_mode true
@@ -8,69 +8,15 @@ copy_on_select true
 
 keybinds clear-defaults=true {
     normal {
-        bind "Ctrl g" { SwitchToMode "locked"; }
-        bind "Ctrl p" { SwitchToMode "pane"; }
-        bind "Ctrl t" { SwitchToMode "tab"; }
-        bind "Ctrl n" { SwitchToMode "resize"; }
-        bind "Ctrl s" { SwitchToMode "scroll"; }
-        bind "Ctrl o" { SwitchToMode "session"; }
-        bind "Ctrl q" { Quit; }
         bind "Alt n" { NewPane; }
+        bind "Alt t" { NewTab; }
+        bind "Alt x" { CloseFocus; }
+        bind "Alt q" { Quit; }
         bind "Alt h" "Alt Left" { MoveFocusOrTab "Left"; }
         bind "Alt l" "Alt Right" { MoveFocusOrTab "Right"; }
         bind "Alt j" "Alt Down" { MoveFocus "Down"; }
         bind "Alt k" "Alt Up" { MoveFocus "Up"; }
         bind "Alt =" "Alt +" { Resize "Increase"; }
         bind "Alt -" { Resize "Decrease"; }
-        bind "Alt [" { PreviousSwapLayout; }
-        bind "Alt ]" { NextSwapLayout; }
-    }
-    locked {
-        bind "Ctrl g" { SwitchToMode "normal"; }
-    }
-    pane {
-        bind "Ctrl p" "Esc" { SwitchToMode "normal"; }
-        bind "h" "Left" { MoveFocus "Left"; }
-        bind "l" "Right" { MoveFocus "Right"; }
-        bind "j" "Down" { MoveFocus "Down"; }
-        bind "k" "Up" { MoveFocus "Up"; }
-        bind "n" { NewPane; SwitchToMode "normal"; }
-        bind "d" { NewPane "Down"; SwitchToMode "normal"; }
-        bind "r" { NewPane "Right"; SwitchToMode "normal"; }
-        bind "x" { CloseFocus; SwitchToMode "normal"; }
-        bind "f" { ToggleFocusFullscreen; SwitchToMode "normal"; }
-        bind "z" { TogglePaneFrames; SwitchToMode "normal"; }
-        bind "w" { ToggleFloatingPanes; SwitchToMode "normal"; }
-    }
-    tab {
-        bind "Ctrl t" "Esc" { SwitchToMode "normal"; }
-        bind "h" "Left" { GoToPreviousTab; }
-        bind "l" "Right" { GoToNextTab; }
-        bind "n" { NewTab; SwitchToMode "normal"; }
-        bind "x" { CloseTab; SwitchToMode "normal"; }
-        bind "r" { RenameTab; }
-        bind "1" { GoToTab 1; SwitchToMode "normal"; }
-        bind "2" { GoToTab 2; SwitchToMode "normal"; }
-        bind "3" { GoToTab 3; SwitchToMode "normal"; }
-        bind "4" { GoToTab 4; SwitchToMode "normal"; }
-        bind "5" { GoToTab 5; SwitchToMode "normal"; }
-    }
-    resize {
-        bind "Ctrl n" "Esc" { SwitchToMode "normal"; }
-        bind "h" "Left" { Resize "Increase Left"; }
-        bind "l" "Right" { Resize "Increase Right"; }
-        bind "j" "Down" { Resize "Increase Down"; }
-        bind "k" "Up" { Resize "Increase Up"; }
-    }
-    scroll {
-        bind "Ctrl s" "Esc" { SwitchToMode "normal"; }
-        bind "j" "Down" { ScrollDown; }
-        bind "k" "Up" { ScrollUp; }
-        bind "Ctrl f" { PageScrollDown; }
-        bind "Ctrl b" { PageScrollUp; }
-    }
-    session {
-        bind "Ctrl o" "Esc" { SwitchToMode "normal"; }
-        bind "d" { Detach; }
     }
 }

@@ -64,20 +64,29 @@ Helix/Alacritty/Zellij, each language's toolchain/LSP, `lldb-dap`,
 `cargo-watch`, `glow`, and `entr`; symlinks everything into `~/.config/`
 and drops the `mdp` script on your `PATH`.
 
-Two things it can't fully automate:
-- **Zig** on Debian/Ubuntu — grab a release binary from ziglang.org (apt's
-  version is usually stale).
-- **zls** — build from source, matched to your installed Zig version.
+Notes on packages it can't get from apt directly:
+- **Helix** on Ubuntu — not in the default repos, so the script adds the
+  official PPA (`ppa:maveonair/helix-editor`) and installs from there. On
+  non-Ubuntu
 
 ## Day-to-day use
 
 ```bash
 cd ~/some-project
-alacritty
+dev
 ```
 
-Alacritty launches maximized, in light Catppuccin Latte colors, straight
-into Zellij's `dev` layout:
+`dev` is a small wrapper (`scripts/dev.sh`) that opens a Zellij session
+using the `dev` layout, named after the current folder — so each project
+gets its own persistent session. Run `dev` again from the same folder later
+and it reattaches instead of starting fresh; your panes, running builds,
+and the `llms` tab pick up right where you left off.
+
+If you'd rather launch straight from your desktop instead of an existing
+terminal, open Alacritty (maximized, light Catppuccin Latte colors) and
+run `dev` inside it — same result.
+
+Inside the session:
 
 - **Tab 1 — `editor`**: Helix open on `.` across the top; underneath, two
   shells side by side — left one is meant for a build/watch loop
@@ -85,42 +94,3 @@ into Zellij's `dev` layout:
   pytest-watch, etc.), right one is a free scratch shell.
 - **Tab 2 — `llms`**: launches `opencode` automatically. Swap the `command`
   in `zellij/layouts/dev.kdl` if you use a different LLM CLI.
-
-### Notifications when something needs you
-
-`notify-bell.sh` fires on every terminal bell (`\a`) — most CLI tools,
-including LLM/agent CLIs, ring it when they finish or are waiting on input.
-It tries `notify-send` (Linux), then `terminal-notifier`, then `osascript`
-(macOS) — whichever is available. Bell passes through Zellij to Alacritty
-by default, so this works from any pane, including the `llms` tab.
-
-### Mouse behavior
-
-- Left-click and drag to select text — it's copied to the system clipboard
-  automatically (`copy_on_select` in `zellij/config.kdl`).
-- Right-click pastes (`mouse.bindings` in `alacritty.toml`).
-
-### Markdown preview
-
-```bash
-mdp README.md
-```
-
-Renders the file with `glow` and re-renders on every save (via `entr`) —
-run it in the free/scratch shell pane. There's also a `space m` binding in
-Helix that does a one-shot `glow -p` render, but it needs Helix ≥ 24.03 for
-the `%{buffer_name}` expansion — if yours is older, use `Ctrl-z` to suspend
-Helix and run `glow -p file.md` by hand, then `fg` to resume.
-
-## Customizing
-
-- **Theme**: this is set up for light mode — Helix uses `catppuccin_latte`
-  and Zellij uses `catppuccin-latte`. If your Zellij build doesn't ship
-  Catppuccin themes built in, grab the theme file from
-  `catppuccin/zellij` on GitHub and drop it in `~/.config/zellij/themes/`.
-- **Font**: both Alacritty and the terminal UI assume "JetBrainsMono Nerd
-  Font" is installed — change `font.normal.family` in `alacritty.toml` if
-  you use something else.
-- **Layout**: `zellij/layouts/dev.kdl` is the single source of truth for
-  pane/tab arrangement — edit sizes, add tabs, or point the `llms` tab at
-  a different CLI there.
