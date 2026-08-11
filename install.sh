@@ -339,19 +339,31 @@ for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
     add_alias "$rc" "alias rsdev='zellij --layout rsdev'"
 done
 
-# rt(): fuzzy-pick a single test (via fzf) and run it with cargo-nextest,
-# instead of typing the full test path by hand.
+# rt(): fuzzy-pick a single test and run it with cargo-nextest.
+# Uses `cargo test -- --list` as the source of test names (nextest's own
+# `list` output is grouped/indented per binary and isn't a clean match
+# string) — any argument passed to rt pre-fills the fzf search query,
+# e.g. `rt any_type`.
 add_function() {
     local rc_file="$1"
     local marker="# rt(): fuzzy-pick and run a single test"
-    if [[ -f "$rc_file" ]] && ! grep -Fq "$marker" "$rc_file"; then
+    if [[ -f "$rc_file" ]]; then
+        # Remove an older/broken version of the function if present, so
+        # re-running install.sh actually fixes it instead of leaving a
+        # stale duplicate.
+        if grep -Fq "$marker" "$rc_file"; then
+            sed -i.bak '/^# rt(): fuzzy-pick/,/^}$/d' "$rc_file"
+        fi
         echo "==> Adding rt() test-picker function to $rc_file"
         cat >> "$rc_file" <<'EOF'
 
 # rt(): fuzzy-pick and run a single test (cargo-nextest + fzf)
 rt() {
     local test
-    test=$(cargo nextest list 2>/dev/null | fzf --height 40%) || return
+    test=$(cargo test --tests -- --list 2>/dev/null \
+        | grep ': test$' \
+        | sed 's/: test$//' \
+        | fzf --height 40% --query "$*") || return
     cargo nextest run "$test"
 }
 EOF
