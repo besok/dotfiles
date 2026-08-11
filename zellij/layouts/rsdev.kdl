@@ -36,19 +36,17 @@ layout {
         pane command="lazygit"
     }
 
-    // Tab 4: continuous test runner. Uses cargo-nextest if present
-    // (faster, nicer output), falls back to `cargo test` otherwise.
-    tab name="test" {
-        pane command="bash" {
-            args "-c" "cargo watch -x 'nextest run' || cargo watch -x test"
-        }
-    }
-
-    // Tab 5: continuous clippy — lint feedback the moment you save,
-    // instead of only when you remember to run it manually.
-    tab name="clippy" {
-        pane command="cargo" {
-            args "watch" "-x" "clippy"
+    // Tab 4: checks — all manual, no auto-watch.
+    // Top (60%): run a single test, e.g. via `rt` (fzf-pick + cargo nextest run).
+    // Bottom-left: full test suite, run manually (cargo nextest run / cargo test).
+    // Bottom-right: clippy, run manually (cargo clippy).
+    tab name="checks" {
+        pane split_direction="horizontal" {
+            pane size="60%" name="single-test"
+            pane split_direction="vertical" size="40%" {
+                pane name="all-tests"
+                pane name="clippy"
+            }
         }
     }
 }

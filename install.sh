@@ -339,5 +339,27 @@ for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
     add_alias "$rc" "alias rsdev='zellij --layout rsdev'"
 done
 
+# rt(): fuzzy-pick a single test (via fzf) and run it with cargo-nextest,
+# instead of typing the full test path by hand.
+add_function() {
+    local rc_file="$1"
+    local marker="# rt(): fuzzy-pick and run a single test"
+    if [[ -f "$rc_file" ]] && ! grep -Fq "$marker" "$rc_file"; then
+        echo "==> Adding rt() test-picker function to $rc_file"
+        cat >> "$rc_file" <<'EOF'
+
+# rt(): fuzzy-pick and run a single test (cargo-nextest + fzf)
+rt() {
+    local test
+    test=$(cargo nextest list 2>/dev/null | fzf --height 40%) || return
+    cargo nextest run "$test"
+}
+EOF
+    fi
+}
+
+add_function "$HOME/.bashrc"
+add_function "$HOME/.zshrc"
+
 echo ""
 echo "==> Done. Run 'source ~/.bashrc' or 'source ~/.zshrc' to apply."
