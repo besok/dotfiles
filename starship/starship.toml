@@ -1,0 +1,96 @@
+# Starship prompt — Catppuccin Latte, matches the helix/alacritty theme.
+# Docs: https://starship.rs/config
+#
+# Layout:
+#   ~/code/project on  main [!?] via rust v1.80.0 took 3s
+#   ❯
+#
+# Segments only appear when relevant (git info only inside a repo,
+# language version only inside a matching project, duration only if
+# the last command took a while).
+
+format = """
+$directory\
+$git_branch\
+$git_status\
+$rust\
+$python\
+$c\
+$cmd_duration
+$character"""
+
+add_newline = true
+
+palette = "catppuccin_latte"
+
+[palettes.catppuccin_latte]
+rosewater = "#dc8a78"
+flamingo  = "#dd7878"
+pink      = "#ea76cb"
+mauve     = "#8839ef"
+red       = "#d20f39"
+maroon    = "#e64553"
+peach     = "#fe640b"
+yellow    = "#df8e1d"
+green     = "#40a02b"
+teal      = "#179299"
+sky       = "#04a5e5"
+sapphire  = "#209fb5"
+blue      = "#1e66f5"
+lavender  = "#7287fd"
+text      = "#4c4f69"
+
+[directory]
+style = "blue bold"
+truncation_length = 3
+truncate_to_repo = true
+format = "[$path]($style) "
+
+[git_branch]
+symbol = " "
+style = "mauve bold"
+format = "on [$symbol$branch]($style) "
+
+[git_status]
+style = "red bold"
+format = "[$all_status$ahead_behind]($style) "
+conflicted = "="
+ahead = "⇡${count}"
+behind = "⇣${count}"
+diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+untracked = "?"
+stashed = "$"
+modified = "!"
+staged = "+${count}"
+renamed = "»"
+deleted = "✘"
+
+# --- language toolchains covered by install.sh ---
+
+[rust]
+symbol = " "
+style = "peach bold"
+format = "via [$symbol$version]($style) "
+
+[python]
+symbol = " "
+style = "yellow bold"
+format = "via [$symbol$version(\\($virtualenv\\))]($style) "
+
+[c]
+symbol = " "
+style = "sapphire bold"
+format = "via [$symbol$name]($style) "
+# Note: starship has no dedicated Zig module yet; it falls back to
+# showing nothing for .zig projects, which is fine — `zig version`
+# is one command away when you need it.
+
+[cmd_duration]
+min_time = 2000
+style = "teal bold"
+format = "took [$duration]($style) "
+
+[character]
+success_symbol = "[❯](green bold)"
+error_symbol = "[❯](red bold)"
+vimcmd_symbol = "[❮](green bold)"

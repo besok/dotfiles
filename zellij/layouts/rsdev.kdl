@@ -10,8 +10,7 @@ layout {
     }
 
     // Tab 1: editor on top, two shells side-by-side underneath.
-    // Left shell: whatever build/watch command fits the project
-    // (cargo watch -x run, zig build run, make, pytest -f, etc.)
+    // Left shell: build/watch (e.g. cargo watch -x run)
     // Right shell: free — use it however you like.
     tab name="editor" focus=true {
         pane split_direction="horizontal" {
@@ -35,5 +34,21 @@ layout {
     // Tab 3: lazygit — status/diff/stage/commit/push without leaving the session
     tab name="git" {
         pane command="lazygit"
+    }
+
+    // Tab 4: continuous test runner. Uses cargo-nextest if present
+    // (faster, nicer output), falls back to `cargo test` otherwise.
+    tab name="test" {
+        pane command="bash" {
+            args "-c" "cargo watch -x 'nextest run' || cargo watch -x test"
+        }
+    }
+
+    // Tab 5: continuous clippy — lint feedback the moment you save,
+    // instead of only when you remember to run it manually.
+    tab name="clippy" {
+        pane command="cargo" {
+            args "watch" "-x" "clippy"
+        }
     }
 }
