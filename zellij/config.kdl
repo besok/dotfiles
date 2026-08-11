@@ -12,10 +12,17 @@ keybinds clear-defaults=true {
         bind "Alt t" { NewTab; }
         bind "Alt x" { CloseFocus; }
         bind "Alt q" { Quit; }
-        bind "Alt h" "Alt Left" { MoveFocusOrTab "Left"; }
-        bind "Alt l" "Alt Right" { MoveFocusOrTab "Right"; }
+        // Pure pane movement — stays within the current tab, never
+        // switches tabs, so it can't disturb what's focused elsewhere.
+        bind "Alt h" "Alt Left" { MoveFocus "Left"; }
+        bind "Alt l" "Alt Right" { MoveFocus "Right"; }
         bind "Alt j" "Alt Down" { MoveFocus "Down"; }
         bind "Alt k" "Alt Up" { MoveFocus "Up"; }
+        // Dedicated tab switching — Zellij restores whichever pane was
+        // last focused in that tab, since this never touches pane focus
+        // the way MoveFocusOrTab's edge-crossing does.
+        bind "Alt Shift Left" "Alt Shift H" { GoToPreviousTab; }
+        bind "Alt Shift Right" "Alt Shift L" { GoToNextTab; }
         bind "Alt =" "Alt +" { Resize "Increase"; }
         bind "Alt -" { Resize "Decrease"; }
     }
