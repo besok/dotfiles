@@ -12,7 +12,7 @@ idle-timeout = 200
 completion-trigger-len = 1
 auto-completion = true
 auto-format = true
-auto-save = false
+auto-save = true
 default-line-ending = "lf"
 
 [editor.cursor-shape]
