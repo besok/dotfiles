@@ -1,0 +1,29 @@
+# Routes Enter on text/code files to Helix instead of yazi's default
+# opener. Symlinked to ~/.config/yazi/yazi.toml by install.sh.
+#
+# block = true matters: it tells yazi to suspend itself and hand the
+# terminal fully to Helix, rather than trying to run it in the
+# background — without it, Helix opens in a broken, non-interactive
+# state.
+#
+# $EDITOR is also set to "hx" by install.sh, which covers yazi's
+# separate "open in editor" action (bound in yazi's own keymap.toml,
+# commonly ctrl-e) as well as git/crontab/etc. This file only controls
+# what happens when you press Enter on a file yazi doesn't already
+# treat as a text file.
+
+[opener]
+edit = [
+	{ run = 'hx "$@"', desc = "Open with Helix", block = true },
+]
+
+[open]
+prepend_rules = [
+	# Broad net: catches most source/text files without needing a
+	# name pattern for every extension
+	{ mime = "text/*", use = "edit" },
+
+]
+
+[mgr]
+show_hidden = true

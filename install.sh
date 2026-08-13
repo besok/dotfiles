@@ -204,6 +204,26 @@ cargo install cargo-audit --locked || echo "!! cargo-audit install failed — yo
 cargo install cargo-expand --locked || echo "!! cargo-expand install failed — you can retry manually later."
 
 # -------------------------------------------------------------------
+# 6b. yazi: terminal file manager (tree/columns view, previews) — handy
+#     for bulk file ops (rename/move/copy/delete) that Helix's built-in
+#     `space e` explorer deliberately doesn't do.
+# -------------------------------------------------------------------
+echo "==> Installing yazi..."
+case "$PKG" in
+    brew)   install_pkgs yazi ;;
+    pacman) install_pkgs yazi ;;
+    apt)
+        # No apt package. Note: yazi-fm/yazi-cli can't be built directly
+        # from crates.io via `cargo install` due to a cargo build-script
+        # limitation — yazi ships a small installer wrapper crate,
+        # `yazi-build`, that has to be used instead.
+        ensure_rust
+        cargo install --force --locked yazi-build || echo "!! yazi install failed — you can retry manually later."
+        install_pkgs ffmpegthumbnailer poppler-utils unar file || true
+        ;;
+esac
+
+# -------------------------------------------------------------------
 # 7. Zig: compiler (includes fmt) + zls language server
 # -------------------------------------------------------------------
 echo "==> Setting up Zig tooling..."
@@ -326,6 +346,14 @@ if command -v starship >/dev/null 2>&1; then
     add_line "$HOME/.zshrc"  'eval "$(starship init zsh)"'
 fi
 
+# Set Helix as the default $EDITOR/$VISUAL — respected by yazi's built-in
+# "open in editor" action, git commit/rebase, crontab -e, and anything
+# else that shells out to an editor rather than using per-tool config.
+add_line "$HOME/.bashrc" 'export EDITOR="hx"'
+add_line "$HOME/.bashrc" 'export VISUAL="hx"'
+add_line "$HOME/.zshrc"  'export EDITOR="hx"'
+add_line "$HOME/.zshrc"  'export VISUAL="hx"'
+
 # -------------------------------------------------------------------
 # 10. Symlink configs + helper scripts + shell aliases
 # -------------------------------------------------------------------
@@ -340,6 +368,21 @@ ln -sf "$DOTFILES_DIR/zellij/layouts/dev.kdl"   "$CONFIG_HOME/zellij/layouts/dev
 ln -sf "$DOTFILES_DIR/zellij/layouts/rsdev.kdl" "$CONFIG_HOME/zellij/layouts/rsdev.kdl"
 ln -sf "$DOTFILES_DIR/starship/starship.toml"   "$CONFIG_HOME/starship.toml"
 ln -sf "$DOTFILES_DIR/scripts/mdp.sh"           "$LOCAL_BIN/mdp"
+
+# yazi: route Enter on text/code files to Helix instead of yazi's default
+# opener (block=true hands the terminal fully to hx instead of trying to
+# background it, which would otherwise leave Helix in a broken state)
+if command -v yazi >/dev/null 2>&1 || command -v ya >/dev/null 2>&1; then
+    mkdir -p "$CONFIG_HOME/yazi"
+    ln -sf "$DOTFILES_DIR/yazi/yazi.toml" "$CONFIG_HOME/yazi/yazi.toml"
+fi
+
+# lazygit: route diffs through delta in side-by-side mode (lazygit has
+# no native side-by-side toggle of its own)
+if command -v lazygit >/dev/null 2>&1; then
+    mkdir -p "$CONFIG_HOME/lazygit"
+    ln -sf "$DOTFILES_DIR/lazygit/config.yml" "$CONFIG_HOME/lazygit/config.yml"
+fi
 
 if [[ -d "$DOTFILES_DIR/scripts" ]]; then
     chmod +x "$DOTFILES_DIR"/scripts/*.sh
@@ -382,6 +425,36 @@ for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
     add_alias "$rc" "alias cf='cargo fmt'"
     add_alias "$rc" "alias cu='cargo update'"
 done
+
+# y(): launch yazi, and if you cd'd somewhere inside it, land your shell
+# there on quit (the standard wrapper recommended by yazi's own docs —
+# without it, exiting yazi drops you back where you started).
+add_yazi_function() {
+    local rc_file="$1"
+    local marker="# y(): launch yazi, cd to wherever you navigated to on quit"
+    if [[ -f "$rc_file" ]]; then
+        if grep -Fq "$marker" "$rc_file"; then
+            sed -i.bak '/^# y(): launch yazi/,/^}$/d' "$rc_file"
+        fi
+        echo "==> Adding y() yazi wrapper to $rc_file"
+        cat >> "$rc_file" <<'EOF'
+
+# y(): launch yazi, cd to wherever you navigated to on quit
+y() {
+    local tmp cwd
+    tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
+    yazi "$@" --cwd-file="$tmp"
+    if cwd="$(cat -- "$tmp")" && [[ -n "$cwd" && "$cwd" != "$PWD" ]]; then
+        cd -- "$cwd"
+    fi
+    rm -f -- "$tmp"
+}
+EOF
+    fi
+}
+
+add_yazi_function "$HOME/.bashrc"
+add_yazi_function "$HOME/.zshrc"
 
 # rt(): fuzzy-pick a single test and run it with cargo-nextest.
 # Uses `cargo test -- --list` as the source of test names (nextest's own
