@@ -173,13 +173,35 @@ pipx install pyright  --force
 pipx install ruff     --force
 
 # -------------------------------------------------------------------
-# 6. Rust: rustup toolchain + rust-analyzer + clippy + cargo-watch + cargo-nextest
+# 6. Rust: rustup toolchain + rust-analyzer + clippy + cargo subcommands
 # -------------------------------------------------------------------
 echo "==> Setting up Rust tooling..."
 ensure_rust
 rustup component add rust-analyzer clippy rustfmt
-cargo install cargo-watch --locked   || echo "!! cargo-watch install failed — you can retry manually later."
+
+# Test running + fast incremental feedback
+cargo install cargo-watch   --locked || echo "!! cargo-watch install failed — you can retry manually later."
 cargo install cargo-nextest --locked || echo "!! cargo-nextest install failed — 'test' tab falls back to 'cargo test'."
+
+# bacon: background compiler with a compact, always-on diagnostics panel.
+# This is the thing most people actually want for "just show me errors,
+# compactly, live" — nicer than piping cargo-watch output through grep.
+cargo install bacon --locked || echo "!! bacon install failed — you can retry manually later."
+
+# cargo-edit: adds `cargo add` / `cargo rm` / `cargo upgrade` for managing
+# Cargo.toml dependencies from the CLI instead of hand-editing.
+cargo install cargo-edit --locked || echo "!! cargo-edit install failed — you can retry manually later."
+
+# cargo-outdated: reports dependencies with newer versions available.
+cargo install cargo-outdated --locked || echo "!! cargo-outdated install failed — you can retry manually later."
+
+# cargo-audit: scans Cargo.lock against the RustSec advisory database for
+# known security vulnerabilities.
+cargo install cargo-audit --locked || echo "!! cargo-audit install failed — you can retry manually later."
+
+# cargo-expand: pretty-prints the output of macro expansion — handy for
+# debugging derive macros and proc-macros.
+cargo install cargo-expand --locked || echo "!! cargo-expand install failed — you can retry manually later."
 
 # -------------------------------------------------------------------
 # 7. Zig: compiler (includes fmt) + zls language server
@@ -337,6 +359,28 @@ add_alias() {
 for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
     add_alias "$rc" "alias dev='zellij --layout dev'"
     add_alias "$rc" "alias rsdev='zellij --layout rsdev'"
+done
+
+# -------------------------------------------------------------------
+# Rust / cargo aliases — compact-output build loop
+# -------------------------------------------------------------------
+# cb   - cargo build,  compact one-line diagnostics, no progress spam
+# cc   - cargo check,  same but skips codegen (fastest feedback loop)
+# ccl  - cargo clippy, compact diagnostics
+# cw   - cargo-watch running `cargo check` on every save, compact format
+# cbg  - bacon, the live always-on compact diagnostics panel
+# ct   - run the full test suite via cargo-nextest
+# cf   - cargo fmt
+# cu   - cargo update (bump Cargo.lock within semver constraints)
+for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
+    add_alias "$rc" "alias cb='cargo build --quiet --message-format=short'"
+    add_alias "$rc" "alias cc='cargo check --quiet --message-format=short'"
+    add_alias "$rc" "alias ccl='cargo clippy --quiet --message-format=short'"
+    add_alias "$rc" "alias cw='cargo watch -x \"check --message-format=short\"'"
+    add_alias "$rc" "alias cbg='bacon'"
+    add_alias "$rc" "alias ct='cargo nextest run'"
+    add_alias "$rc" "alias cf='cargo fmt'"
+    add_alias "$rc" "alias cu='cargo update'"
 done
 
 # rt(): fuzzy-pick a single test and run it with cargo-nextest.
