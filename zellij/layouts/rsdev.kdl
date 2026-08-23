@@ -9,7 +9,14 @@ layout {
         }
     }
 
-    // Tab 1: editor on top, two shells side-by-side underneath.
+    // Tab 1: files — yazi file manager
+    tab name="files" {
+        pane command="bash" {
+            args "-ic" "y"
+        }
+    }
+
+    // Tab 2: editor on top, two shells side-by-side underneath.
     // Left shell: build/watch (e.g. cargo watch -x run)
     // Right shell: free — use it however you like.
     tab name="editor" focus=true {
@@ -24,19 +31,19 @@ layout {
         }
     }
 
-    // Tab 2: LLM assistant CLI
+    // Tab 3: LLM assistant CLI
     tab name="llms" {
     pane command="bash" {
         args "-c" "opencode; ~/.config/alacritty/notify-bell.sh"
       }
    }
 
-    // Tab 3: lazygit — status/diff/stage/commit/push without leaving the session
+    // Tab 4: lazygit — status/diff/stage/commit/push without leaving the session
     tab name="git" {
         pane command="lazygit"
     }
 
-    // Tab 4: checks — all manual, no auto-watch.
+    // Tab 5: checks — all manual, no auto-watch.
     // Top (60%): run a single test, e.g. via `rt` (fzf-pick + cargo nextest run).
     // Bottom-left: full test suite, run manually (cargo nextest run / cargo test).
     // Bottom-right: clippy, run manually (cargo clippy).

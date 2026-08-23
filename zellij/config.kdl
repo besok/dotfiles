@@ -8,6 +8,7 @@ copy_on_select true
 
 keybinds clear-defaults=true {
     normal {
+        bind "Ctrl g" { SwitchToMode "locked"; }
         bind "Alt n" { NewPane; }
         bind "Alt t" { NewTab; }
         bind "Alt x" { CloseFocus; }
@@ -25,5 +26,8 @@ keybinds clear-defaults=true {
         bind "Alt Shift Right" "Alt Shift L" { GoToNextTab; }
         bind "Alt =" "Alt +" { Resize "Increase"; }
         bind "Alt -" { Resize "Decrease"; }
+    }
+     locked {
+        bind "Ctrl g" { SwitchToMode "normal"; }
     }
 }
