@@ -62,8 +62,8 @@ chmod +x install.sh
 
 Detects macOS (Homebrew), Debian/Ubuntu (apt), or Arch (pacman); installs
 Helix/Alacritty/Zellij, each language's toolchain/LSP, `lldb-dap`,
-`cargo-watch`, `glow`, and `entr`; symlinks everything into `~/.config/`
-and drops the `mdp` script on your `PATH`.
+`cargo-watch`, `glow`, `entr`, and `resvg` (SVG rasterizer); symlinks
+everything into `~/.config/` and drops the `mdp` script on your `PATH`.
 
 Notes on packages it can't get from apt directly:
 - **Helix** on Ubuntu — not in the default repos, so the script adds the

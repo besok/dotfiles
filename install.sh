@@ -252,12 +252,12 @@ case "$PKG" in
     brew)
         install_pkgs ripgrep fd fzf zoxide bat eza jq git-delta \
                       btop dust procs gh lazygit just direnv \
-                      hyperfine starship tealdeer
+                      hyperfine starship tealdeer resvg
         ;;
     pacman)
         install_pkgs ripgrep fd fzf zoxide bat eza jq git-delta \
                       btop dust procs github-cli lazygit just direnv \
-                      hyperfine starship tealdeer
+                      hyperfine starship tealdeer resvg
         ;;
     apt)
         # Packages that install cleanly under their expected name/binary
@@ -308,6 +308,9 @@ case "$PKG" in
             bin="${entry%%:*}"; crate="${entry##*:}"
             command -v "$bin" >/dev/null 2>&1 || cargo install "$crate" --locked || echo "!! $crate install failed."
         done
+
+        # resvg: SVG rasterizer CLI (no apt package) — cargo install
+        command -v resvg >/dev/null 2>&1 || cargo install resvg --locked || echo "!! resvg install failed."
 
         # lazygit: no apt package — grab the latest release binary
         if ! command -v lazygit >/dev/null 2>&1; then
