@@ -16,7 +16,7 @@ dotfiles/
 │   ├── config.kdl          # keybindings, theme, mouse behavior
 │   └── layouts/
 │       ├── dev.kdl         # files (yazi) + editor (hx + 2 shells) + llms + git
-│       └── rsdev.kdl       # same as dev, plus a checks tab
+│       └── rsdev.kdl       # same as dev, plus an ops tab
 └── scripts/
     └── mdp.sh              # live markdown preview (glow + entr), installed as `mdp`
 ```
@@ -88,7 +88,7 @@ terminal, open Alacritty (maximized, light Catppuccin Latte colors) and
 run `dev` inside it — same result.
 
 For Rust projects, use `rsdev` instead — it's the same wrapper but opens the
-`rsdev` layout, which adds a `checks` tab with dedicated panes for a single
+`rsdev` layout, which adds an `ops` tab with dedicated panes for a single
 test, the full test suite, and `clippy` (all run manually).
 
 Inside the session:
@@ -96,9 +96,7 @@ Inside the session:
 - **Tab 1 — `files`**: launches `y` (yazi) automatically — a terminal file
   manager for browsing, previewing, and editing files without leaving the
   session.
-- **Tab 2 — `editor`**: Helix open on `.` across the top; underneath, two
-  shells side by side — left one is meant for a build/watch loop
-  (`cargo watch -x run`, `zig build run --watch`, `make`, `ptw` for
-  pytest-watch, etc.), right one is a free scratch shell.
+- **Tab 2 — `editor`**: Helix open on `.` across the top; underneath, a single
+  scratch shell.
 - **Tab 3 — `llms`**: launches `opencode` automatically. Swap the `command`
   in `zellij/layouts/dev.kdl` if you use a different LLM CLI.

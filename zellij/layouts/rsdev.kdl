@@ -16,38 +16,21 @@ layout {
         }
     }
 
-    // Tab 2: editor on top, two shells side-by-side underneath.
-    // Left shell: build/watch (e.g. cargo watch -x run)
-    // Right shell: free — use it however you like.
+    // Tab 2: editor on top, one scratch shell underneath.
     tab name="editor" focus=true {
         pane split_direction="horizontal" {
             pane command="hx" size="75%" {
                 args "."
             }
-            pane split_direction="vertical" size="25%" {
-                pane name="build/watch"
-                pane name="scratch"
-            }
+            pane name="scratch" size="25%"
         }
     }
 
-    // Tab 3: LLM assistant CLI
-    tab name="llms" {
-    pane command="bash" {
-        args "-c" "opencode; ~/.config/alacritty/notify-bell.sh"
-      }
-   }
-
-    // Tab 4: lazygit — status/diff/stage/commit/push without leaving the session
-    tab name="git" {
-        pane command="lazygit"
-    }
-
-    // Tab 5: checks — all manual, no auto-watch.
+    // Tab 3: ops — all manual, no auto-watch.
     // Top (60%): run a single test, e.g. via `rt` (fzf-pick + cargo nextest run).
     // Bottom-left: full test suite, run manually (cargo nextest run / cargo test).
     // Bottom-right: clippy, run manually (cargo clippy).
-    tab name="checks" {
+    tab name="ops" {
         pane split_direction="horizontal" {
             pane size="60%" name="single-test"
             pane split_direction="vertical" size="40%" {
@@ -55,5 +38,17 @@ layout {
                 pane name="clippy"
             }
         }
+    }
+
+    // Tab 4: LLM assistant CLI
+    tab name="llms" {
+    pane command="bash" {
+        args "-c" "opencode; ~/.config/alacritty/notify-bell.sh"
+      }
+   }
+
+    // Tab 5: lazygit — status/diff/stage/commit/push without leaving the session
+    tab name="git" {
+        pane command="lazygit"
     }
 }
