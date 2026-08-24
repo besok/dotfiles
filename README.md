@@ -120,6 +120,7 @@ Rust / cargo aliases:
 | `ct`  | Run the full test suite via `cargo nextest run` |
 | `cf`  | `cargo fmt` |
 | `cu`  | `cargo update` (bump `Cargo.lock` within semver constraints) |
+| `cr`  | `cargo run` (build + run the project binary), mirrors `pm` |
 | `rt`  | Fuzzy-pick and run a single Rust test (cargo-nextest + fzf) |
 
 Python / uv aliases (the cargo-equivalent workflow, powered by [uv](https://docs.astral.sh/uv/)):

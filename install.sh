@@ -433,6 +433,7 @@ done
 # ct   - run the full test suite via cargo-nextest
 # cf   - cargo fmt
 # cu   - cargo update (bump Cargo.lock within semver constraints)
+# cr   - cargo run (build + run the project's binary), mirrors `pm`
 for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
     add_alias "$rc" "alias cb='cargo build --quiet --message-format=short'"
     add_alias "$rc" "alias cc='cargo check --quiet --message-format=short'"
@@ -442,6 +443,7 @@ for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
     add_alias "$rc" "alias ct='cargo nextest run'"
     add_alias "$rc" "alias cf='cargo fmt'"
     add_alias "$rc" "alias cu='cargo update'"
+    add_alias "$rc" "alias cr='cargo run'"
 done
 
 # -------------------------------------------------------------------
