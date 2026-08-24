@@ -172,6 +172,19 @@ pipx ensurepath || true
 pipx install pyright  --force
 pipx install ruff     --force
 
+# uv: the cargo-equivalent for Python — manages virtualenvs, dependencies,
+# and `uv run` in one fast tool (Rust-based). Installed via its official
+# installer, which drops the binary in ~/.local/bin.
+if ! command -v uv >/dev/null 2>&1; then
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+fi
+
+# pytest + pytest-watch (ptw): test runner and watch-mode for `pt`/`pw`/
+# `ptk`. Installed globally as a fallback; prefer adding them as project
+# dev-deps via `uv add --dev pytest` for per-project environments.
+pipx install pytest        --force || echo "!! pytest install failed."
+pipx install pytest-watch  --force || echo "!! pytest-watch install failed."
+
 # -------------------------------------------------------------------
 # 6. Rust: rustup toolchain + rust-analyzer + clippy + cargo subcommands
 # -------------------------------------------------------------------
@@ -369,6 +382,7 @@ ln -sf "$DOTFILES_DIR/alacritty/alacritty.toml" "$CONFIG_HOME/alacritty/alacritt
 ln -sf "$DOTFILES_DIR/zellij/config.kdl"        "$CONFIG_HOME/zellij/config.kdl"
 ln -sf "$DOTFILES_DIR/zellij/layouts/dev.kdl"   "$CONFIG_HOME/zellij/layouts/dev.kdl"
 ln -sf "$DOTFILES_DIR/zellij/layouts/rsdev.kdl" "$CONFIG_HOME/zellij/layouts/rsdev.kdl"
+ln -sf "$DOTFILES_DIR/zellij/layouts/pydev.kdl" "$CONFIG_HOME/zellij/layouts/pydev.kdl"
 ln -sf "$DOTFILES_DIR/starship/starship.toml"   "$CONFIG_HOME/starship.toml"
 ln -sf "$DOTFILES_DIR/scripts/mdp.sh"           "$LOCAL_BIN/mdp"
 
@@ -405,6 +419,7 @@ add_alias() {
 for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
     add_alias "$rc" "alias dev='zellij --layout dev'"
     add_alias "$rc" "alias rsdev='zellij --layout rsdev'"
+    add_alias "$rc" "alias pydev='zellij --layout pydev'"
 done
 
 # -------------------------------------------------------------------
@@ -427,6 +442,32 @@ for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
     add_alias "$rc" "alias ct='cargo nextest run'"
     add_alias "$rc" "alias cf='cargo fmt'"
     add_alias "$rc" "alias cu='cargo update'"
+done
+
+# -------------------------------------------------------------------
+# Python / uv aliases — the cargo-equivalent workflow
+# -------------------------------------------------------------------
+# pvenv - create a .venv virtualenv in the current project (uv venv)
+# pd    - sync/install the project's dependencies + env (uv sync)
+# pa    - add a dependency (uv add <pkg>), mirrors `cargo add`
+# prm   - remove a dependency (uv remove <pkg>), mirrors `cargo rm`
+# pu    - upgrade locked dependencies within constraints (uv lock --upgrade)
+# pf    - format code (ruff format)
+# pl    - lint (ruff check)
+# pcx   - lint with auto-fixes applied (ruff check --fix)
+# pt    - run the full test suite (uv run pytest)
+# pw    - run tests on every save (uv run ptw)
+for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
+    add_alias "$rc" "alias pvenv='uv venv'"
+    add_alias "$rc" "alias pd='uv sync'"
+    add_alias "$rc" "alias pa='uv add'"
+    add_alias "$rc" "alias prm='uv remove'"
+    add_alias "$rc" "alias pu='uv lock --upgrade'"
+    add_alias "$rc" "alias pf='ruff format .'"
+    add_alias "$rc" "alias pl='ruff check .'"
+    add_alias "$rc" "alias pcx='ruff check --fix .'"
+    add_alias "$rc" "alias pt='uv run pytest'"
+    add_alias "$rc" "alias pw='uv run ptw'"
 done
 
 # y(): launch yazi, and if you cd'd somewhere inside it, land your shell
@@ -492,6 +533,33 @@ EOF
 
 add_function "$HOME/.bashrc"
 add_function "$HOME/.zshrc"
+
+# ptk(): fuzzy-pick a single pytest test and run it (uv run pytest + fzf).
+# Any argument pre-fills the fzf search query, e.g. `ptk my_test`.
+add_ptk_function() {
+    local rc_file="$1"
+    local marker="# ptk(): fuzzy-pick and run a single test"
+    if [[ -f "$rc_file" ]]; then
+        if grep -Fq "$marker" "$rc_file"; then
+            sed -i.bak '/^# ptk(): fuzzy-pick/,/^}$/d' "$rc_file"
+        fi
+        echo "==> Adding ptk() test-picker function to $rc_file"
+        cat >> "$rc_file" <<'EOF'
+
+# ptk(): fuzzy-pick and run a single pytest test (uv run pytest + fzf)
+ptk() {
+    local test
+    test=$(uv run pytest --collect-only -q 2>/dev/null \
+        | grep '::' \
+        | fzf --height 40% --query "$*") || return
+    uv run pytest "$test"
+}
+EOF
+    fi
+}
+
+add_ptk_function "$HOME/.bashrc"
+add_ptk_function "$HOME/.zshrc"
 
 echo ""
 echo "==> Done. Run 'source ~/.bashrc' or 'source ~/.zshrc' to apply."

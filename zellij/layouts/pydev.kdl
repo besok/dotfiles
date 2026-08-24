@@ -1,0 +1,54 @@
+layout {
+    default_tab_template {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        children
+        pane size=2 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+    }
+
+    // Tab 1: files — yazi file manager
+    tab name="files" {
+        pane command="bash" {
+            args "-ic" "y"
+        }
+    }
+
+    // Tab 2: editor on top, one scratch shell underneath.
+    tab name="editor" focus=true {
+        pane split_direction="horizontal" {
+            pane command="hx" size="75%" {
+                args "."
+            }
+            pane name="scratch" size="25%"
+        }
+    }
+
+    // Tab 3: ops — all manual, no auto-watch.
+    // Top (60%): run a single test, e.g. via `ptk` (fzf-pick + uv run pytest).
+    // Bottom-left: full test suite, run manually (uv run pytest).
+    // Bottom-right: lint, run manually (ruff check).
+    tab name="ops" {
+        pane split_direction="horizontal" {
+            pane size="60%" name="single-test"
+            pane split_direction="vertical" size="40%" {
+                pane name="all-tests"
+                pane name="lint"
+            }
+        }
+    }
+
+    // Tab 4: LLM assistant CLI
+    tab name="llms" {
+    pane command="bash" {
+        args "-c" "opencode; ~/.config/alacritty/notify-bell.sh"
+      }
+   }
+
+    // Tab 5: lazygit — status/diff/stage/commit/push without leaving the session
+    tab name="git" {
+        pane command="lazygit"
+    }
+}

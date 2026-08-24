@@ -16,7 +16,8 @@ dotfiles/
 │   ├── config.kdl          # keybindings, theme, mouse behavior
 │   └── layouts/
 │       ├── dev.kdl         # files (yazi) + editor (hx + 2 shells) + llms + git
-│       └── rsdev.kdl       # same as dev, plus an ops tab
+│       ├── rsdev.kdl       # same as dev, plus a Rust ops tab (test/clippy)
+│       └── pydev.kdl       # same as dev, plus a Python ops tab (test/lint)
 └── scripts/
     └── mdp.sh              # live markdown preview (glow + entr), installed as `mdp`
 ```
@@ -91,6 +92,9 @@ For Rust projects, use `rsdev` instead — it's the same wrapper but opens the
 `rsdev` layout, which adds an `ops` tab with dedicated panes for a single
 test, the full test suite, and `clippy` (all run manually).
 
+For Python projects, use `pydev` — the same idea, but its `ops` tab has panes
+for a single test, the full test suite (`uv run pytest`), and `ruff` lint.
+
 ## Useful commands
 
 These aliases and functions are added to `~/.bashrc` / `~/.zshrc` by
@@ -100,6 +104,7 @@ These aliases and functions are added to `~/.bashrc` / `~/.zshrc` by
 |---------|--------------|
 | `dev`   | Open a Zellij session with the `dev` layout (named after the current folder) |
 | `rsdev` | Same, but with the `rsdev` layout (adds an `ops` tab) |
+| `pydev` | Same, but with the `pydev` layout (adds a Python `ops` tab) |
 | `y`     | Launch yazi; on quit, `cd` to wherever you navigated to |
 | `mdp`   | Live markdown preview (glow + entr) |
 
@@ -116,6 +121,25 @@ Rust / cargo aliases:
 | `cf`  | `cargo fmt` |
 | `cu`  | `cargo update` (bump `Cargo.lock` within semver constraints) |
 | `rt`  | Fuzzy-pick and run a single Rust test (cargo-nextest + fzf) |
+
+Python / uv aliases (the cargo-equivalent workflow, powered by [uv](https://docs.astral.sh/uv/)):
+
+| Command | What it does |
+|---------|--------------|
+| `pvenv` | Create a `.venv` in the current project (`uv venv`) |
+| `pd`    | Sync/install the project's deps + env (`uv sync`) |
+| `pa`    | Add a dependency (`uv add <pkg>`) |
+| `prm`   | Remove a dependency (`uv remove <pkg>`) |
+| `pu`    | Upgrade locked deps within constraints (`uv lock --upgrade`) |
+| `pf`    | Format code (`ruff format .`) |
+| `pl`    | Lint (`ruff check .`) |
+| `pcx`   | Lint with auto-fixes (`ruff check --fix .`) |
+| `pt`    | Run the full test suite (`uv run pytest`) |
+| `pw`    | Run tests on every save (`uv run ptw`) |
+| `ptk`   | Fuzzy-pick and run a single pytest test (uv + fzf) |
+
+To use `pt`/`pw`/`ptk`, add `pytest` as a project dev-dependency once:
+`uv add --dev pytest` (add `pytest-watch` too for `pw`).
 
 Inside the session:
 
