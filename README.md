@@ -137,6 +137,7 @@ Python / uv aliases (the cargo-equivalent workflow, powered by [uv](https://docs
 | `pt`    | Run the full test suite (`uv run pytest`) |
 | `pw`    | Run tests on every save (`uv run ptw`) |
 | `ptk`   | Fuzzy-pick and run a single pytest test (uv + fzf) |
+| `pm`    | Run a Python entrypoint via `.venv/bin/python` (defaults to `main.py`) |
 
 To use `pt`/`pw`/`ptk`, add `pytest` as a project dev-dependency once:
 `uv add --dev pytest` (add `pytest-watch` too for `pw`).

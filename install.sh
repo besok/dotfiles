@@ -561,5 +561,43 @@ EOF
 add_ptk_function "$HOME/.bashrc"
 add_ptk_function "$HOME/.zshrc"
 
+# pm(): run a Python entrypoint with the project's .venv interpreter.
+# No args -> runs ./main.py if present. Otherwise pass the script (or
+# `-m module`) to run, e.g. `pm src/app.py` or `pm -m mypkg.cli`.
+add_pm_function() {
+    local rc_file="$1"
+    local marker="# pm(): run a Python entrypoint with the project .venv"
+    if [[ -f "$rc_file" ]]; then
+        if grep -Fq "$marker" "$rc_file"; then
+            sed -i.bak '/^# pm(): run a Python/,/^}$/d' "$rc_file"
+        fi
+        echo "==> Adding pm() entrypoint runner to $rc_file"
+        cat >> "$rc_file" <<'EOF'
+
+# pm(): run a Python entrypoint with the project .venv
+pm() {
+    local py=".venv/bin/python"
+    if [[ ! -x "$py" ]]; then
+        echo "pm: no .venv/bin/python here — run 'pvenv' first." >&2
+        return 1
+    fi
+    if [[ $# -eq 0 ]]; then
+        if [[ -f main.py ]]; then
+            "$py" main.py
+        else
+            echo "pm: no args and no ./main.py — pass a script, e.g. 'pm src/app.py'." >&2
+            return 1
+        fi
+    else
+        "$py" "$@"
+    fi
+}
+EOF
+    fi
+}
+
+add_pm_function "$HOME/.bashrc"
+add_pm_function "$HOME/.zshrc"
+
 echo ""
 echo "==> Done. Run 'source ~/.bashrc' or 'source ~/.zshrc' to apply."
