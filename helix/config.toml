@@ -59,6 +59,7 @@ C-q = ":q"
 # Requires Helix >= 24.03 for the %{buffer_name} expansion; if your
 # version is older, use Ctrl-z to suspend and run `glow -p file.md` by hand.
 m = ":sh glow -p %{buffer_name}"
+C-e = ":sh code -g %{buffer_name}:%{cursor_line}"
 
 [keys.insert]
 "C-s" = ["normal_mode", ":w"]

@@ -152,3 +152,18 @@ Inside the session:
   scratch shell.
 - **Tab 3 — `llms`**: launches `opencode` automatically. Swap the `command`
   in `zellij/layouts/dev.kdl` if you use a different LLM CLI.
+
+## Helix keybindings
+
+Extra bindings added on top of the Helix defaults (in `helix/config.toml`):
+
+| Key      | What it does |
+|----------|--------------|
+| `Ctrl-s` | Save (`:w`) |
+| `Ctrl-q` | Quit (`:q`) |
+| `space`  | Picker menu (`space` → file picker, `w` → save, `q` → quit) |
+| `m`      | Render the current markdown file through `glow` |
+| `Ctrl-e` | Open the current file in VS Code at the cursor line (`code -g`) |
+
+Note: `Ctrl-e` runs in the foreground, so Helix suspends until you close
+VS Code.
