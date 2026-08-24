@@ -91,6 +91,32 @@ For Rust projects, use `rsdev` instead — it's the same wrapper but opens the
 `rsdev` layout, which adds an `ops` tab with dedicated panes for a single
 test, the full test suite, and `clippy` (all run manually).
 
+## Useful commands
+
+These aliases and functions are added to `~/.bashrc` / `~/.zshrc` by
+`install.sh`:
+
+| Command | What it does |
+|---------|--------------|
+| `dev`   | Open a Zellij session with the `dev` layout (named after the current folder) |
+| `rsdev` | Same, but with the `rsdev` layout (adds an `ops` tab) |
+| `y`     | Launch yazi; on quit, `cd` to wherever you navigated to |
+| `mdp`   | Live markdown preview (glow + entr) |
+
+Rust / cargo aliases:
+
+| Command | What it does |
+|---------|--------------|
+| `cb`  | `cargo build` — compact one-line diagnostics, no progress spam |
+| `cc`  | `cargo check` — same, but skips codegen (fastest feedback loop) |
+| `ccl` | `cargo clippy` — compact diagnostics |
+| `cw`  | `cargo watch` running `cargo check` on every save |
+| `cbg` | `bacon` — live, always-on compact diagnostics panel |
+| `ct`  | Run the full test suite via `cargo nextest run` |
+| `cf`  | `cargo fmt` |
+| `cu`  | `cargo update` (bump `Cargo.lock` within semver constraints) |
+| `rt`  | Fuzzy-pick and run a single Rust test (cargo-nextest + fzf) |
+
 Inside the session:
 
 - **Tab 1 — `files`**: launches `y` (yazi) automatically — a terminal file
