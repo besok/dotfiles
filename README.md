@@ -15,9 +15,9 @@ dotfiles/
 ├── zellij/
 │   ├── config.kdl          # keybindings, theme, mouse behavior
 │   └── layouts/
-│       ├── dev.kdl         # files (yazi) + editor (hx + 2 shells) + llms + git
-│       ├── rsdev.kdl       # same as dev, plus a Rust ops tab (test/clippy)
-│       └── pydev.kdl       # same as dev, plus a Python ops tab (test/lint)
+│       ├── dev.kdl         # files (yazi) + editor (hx) + console + llms + git
+│       ├── rsdev.kdl       # same as dev, no console tab; 4-console Rust ops tab
+│       └── pydev.kdl       # same as dev, no console tab; 4-console Python ops tab
 └── scripts/
     └── mdp.sh              # live markdown preview (glow + entr), installed as `mdp`
 ```
@@ -89,11 +89,15 @@ terminal, open Alacritty (maximized, light Catppuccin Latte colors) and
 run `dev` inside it — same result.
 
 For Rust projects, use `rsdev` instead — it's the same wrapper but opens the
-`rsdev` layout, which adds an `ops` tab with dedicated panes for a single
-test, the full test suite, and `clippy` (all run manually).
+`rsdev` layout. There's no `console` tab; instead the `ops` tab is a 2×2 grid
+of four consoles — single test (`rt`), run (`cr`), full test suite
+(`ct`/`cargo test`), and `clippy` (`ccl`) — all run manually.
 
-For Python projects, use `pydev` — the same idea, but its `ops` tab has panes
-for a single test, the full test suite (`uv run pytest`), and `ruff` lint.
+For Python projects, use `pydev` — the same idea, but its `ops` tab is a 2×2
+grid of four consoles: single test (`ptk`), run (`pm`), full test suite
+(`pt`), and lint (`pl`).
+
+In both layouts the `editor` tab is just Helix (no console), like `dev`.
 
 ## Useful commands
 
@@ -143,25 +147,34 @@ Python / uv aliases (the cargo-equivalent workflow, powered by [uv](https://docs
 To use `pt`/`pw`/`ptk`, add `pytest` as a project dev-dependency once:
 `uv add --dev pytest` (add `pytest-watch` too for `pw`).
 
-Inside the session:
+Inside the session (`dev`):
 
 - **Tab 1 — `files`**: launches `y` (yazi) automatically — a terminal file
   manager for browsing, previewing, and editing files without leaving the
   session.
-- **Tab 2 — `editor`**: Helix open on `.` across the top; underneath, a single
-  scratch shell.
-- **Tab 3 — `llms`**: launches `opencode` automatically. Swap the `command`
+- **Tab 2 — `editor`**: Helix open on `.`, full pane — no shell underneath.
+- **Tab 3 — `console`**: a scratch shell for builds and ad-hoc commands.
+- **Tab 4 — `llms`**: launches `opencode` automatically. Swap the `command`
   in `zellij/layouts/dev.kdl` if you use a different LLM CLI.
+- **Tab 5 — `git`**: lazygit, for status/diff/stage/commit without leaving
+  the session.
+
+In `rsdev`/`pydev` there's no `console` tab: the `editor` tab is just Helix,
+and the `ops` tab (a 2×2 grid of four consoles — single test, run, full test
+suite, clippy/lint) sits between `editor` and `llms`.
 
 ## Helix keybindings
 
-Extra bindings added on top of the Helix defaults (in `helix/config.toml`):
+Line numbers are absolute (1-based from the top of the file, not relative to
+the cursor) — see `line-number` in `helix/config.toml`. Extra bindings added
+on top of the Helix defaults (in `helix/config.toml`):
 
 | Key      | What it does |
 |----------|--------------|
 | `Ctrl-s` | Save (`:w`) |
 | `Ctrl-q` | Quit (`:q`) |
 | `space`  | Picker menu (`space` → file picker, `w` → save, `q` → quit) |
+| `space b`| Git blame the current line — prints the commit/author that last touched it to the statusline |
 | `m`      | Render the current markdown file through `glow` |
 | `Ctrl-e` | Open the current file in VS Code at the cursor line (`code -g`) |
 

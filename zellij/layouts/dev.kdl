@@ -16,24 +16,27 @@ layout {
         }
     }
 
-    // Tab 2: editor on top, one scratch shell underneath.
+    // Tab 2: editor — just Helix, no console (see the `console` tab).
     tab name="editor" focus=true {
-        pane split_direction="horizontal" {
-            pane command="hx" size="75%" {
-                args "."
-            }
-            pane name="scratch" size="25%"
+        pane command="hx" {
+            args "."
         }
     }
 
-    // Tab 3: LLM assistant CLI
+    // Tab 3: console — scratch shell for builds/commands, pulled out of
+    // the editor tab so Helix gets the full pane.
+    tab name="console" {
+        pane name="console"
+    }
+
+    // Tab 4: LLM assistant CLI
     tab name="llms" {
     pane command="bash" {
         args "-c" "opencode; ~/.config/alacritty/notify-bell.sh"
       }
    }
 
-    // Tab 4: lazygit — status/diff/stage/commit/push without leaving the session
+    // Tab 5: lazygit — status/diff/stage/commit/push without leaving the session
     tab name="git" {
         pane command="lazygit"
     }

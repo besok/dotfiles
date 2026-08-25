@@ -16,24 +16,25 @@ layout {
         }
     }
 
-    // Tab 2: editor on top, one scratch shell underneath.
+    // Tab 2: editor — just Helix, no console.
     tab name="editor" focus=true {
-        pane split_direction="horizontal" {
-            pane command="hx" size="75%" {
-                args "."
-            }
-            pane name="scratch" size="25%"
+        pane command="hx" {
+            args "."
         }
     }
 
-    // Tab 3: ops — all manual, no auto-watch.
-    // Top (60%): run a single test, e.g. via `rt` (fzf-pick + cargo nextest run).
-    // Bottom-left: full test suite, run manually (cargo nextest run / cargo test).
-    // Bottom-right: clippy, run manually (cargo clippy).
+    // Tab 3: ops — four consoles, all manual, no auto-watch.
+    // Top-left: single test, e.g. `rt` (fzf-pick + cargo nextest run).
+    // Top-right: run, e.g. `cr` (cargo run).
+    // Bottom-left: full test suite (cargo nextest run / cargo test).
+    // Bottom-right: clippy (cargo clippy).
     tab name="ops" {
         pane split_direction="horizontal" {
-            pane size="60%" name="single-test"
-            pane split_direction="vertical" size="40%" {
+            pane split_direction="vertical" {
+                pane name="single-test"
+                pane name="run"
+            }
+            pane split_direction="vertical" {
                 pane name="all-tests"
                 pane name="clippy"
             }
