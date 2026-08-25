@@ -54,9 +54,10 @@ hidden = false
 [keys.normal]
 C-s = ":w"
 C-q = ":q"
-# space b: git blame for the current line — prints the commit/author that
-# last touched it to the statusline (no pause, no shell suspension).
-"space" = { "space" = "file_picker", "w" = ":w", "q" = ":q", "b" = ":echo %sh{git blame -L %{cursor_line},+1 %{buffer_name}}" }
+# space b: fuzzy buffer picker (Helix default, re-added here since the
+# space map is fully redefined below). space B: git blame for the current
+# line — prints the commit/author that last touched it to the statusline.
+"space" = { "space" = "file_picker", "w" = ":w", "q" = ":q", "b" = "buffer_picker", "B" = ":echo %sh{git blame -L %{cursor_line},+1 %{buffer_name}}" }
 # Quick markdown render: pipes current file through glow in a pager.
 # Requires Helix >= 24.03 for the %{buffer_name} expansion; if your
 # version is older, use Ctrl-z to suspend and run `glow -p file.md` by hand.
