@@ -136,9 +136,9 @@ esac
 # -------------------------------------------------------------------
 echo "==> Installing common build tools + glow/entr..."
 case "$PKG" in
-    brew)   install_pkgs git cmake llvm glow entr ;;
+    brew)   install_pkgs git cmake llvm glow entr bear ;;
     apt)    install_pkgs git cmake build-essential clang clangd clang-tidy \
-                          lldb entr
+                          lldb bear entr
             if ! command -v glow >/dev/null 2>&1; then
                 echo "   Installing glow via Charm's apt repo..."
                 sudo mkdir -p /etc/apt/keyrings
@@ -146,7 +146,7 @@ case "$PKG" in
                 echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
                 sudo apt update && sudo apt install -y glow
             fi ;;
-    pacman) install_pkgs git cmake base-devel clang lldb glow entr ;;
+    pacman) install_pkgs git cmake base-devel clang lldb glow entr bear ;;
 esac
 
 if ! command -v lldb-dap >/dev/null 2>&1; then
@@ -190,7 +190,7 @@ pipx install pytest-watch  --force || echo "!! pytest-watch install failed."
 # -------------------------------------------------------------------
 echo "==> Setting up Rust tooling..."
 ensure_rust
-rustup component add rust-analyzer clippy rustfmt
+rustup component add rust-analyzer rust-src clippy rustfmt
 
 # Test running + fast incremental feedback
 cargo install cargo-watch   --locked || echo "!! cargo-watch install failed — you can retry manually later."
@@ -340,10 +340,56 @@ case "$PKG" in
         ;;
 esac
 
-# Wire up delta as git's diff/pager, and zoxide + starship shell hooks
+# -------------------------------------------------------------------
+# 9b. Git diff/merge tooling: difftastic (structural diffs), mergiraf
+#     (syntax-aware merge driver), rerere (replay past resolutions)
+# -------------------------------------------------------------------
+echo "==> Installing difftastic + mergiraf..."
+case "$PKG" in
+    brew)
+        install_pkgs difftastic mergiraf
+        ;;
+    pacman)
+        install_pkgs difftastic
+        # mergiraf is in the AUR; build from source as a fallback
+        command -v mergiraf >/dev/null 2>&1 || { ensure_rust; cargo install --locked mergiraf || echo "!! mergiraf install failed."; }
+        ;;
+    apt)
+        ensure_rust
+        command -v difft    >/dev/null 2>&1 || cargo install --locked difftastic || echo "!! difftastic install failed."
+        command -v mergiraf >/dev/null 2>&1 || cargo install --locked mergiraf   || echo "!! mergiraf install failed."
+        ;;
+esac
+
+# Wire up delta as git's pager for log/show/blame + interactive add
 if command -v delta >/dev/null 2>&1; then
     git config --global core.pager delta
     git config --global interactive.diffFilter "delta --color-only"
+fi
+
+# rerere: reuse recorded conflict resolutions when the same conflict reappears
+git config --global rerere.enabled true
+
+# difftastic: structural (syntax-aware) diff for `git diff`/`show`/`log -p`.
+# delta above stays as the pager; difftastic replaces the diff *algorithm*.
+if command -v difft >/dev/null 2>&1; then
+    git config --global diff.external "difft --color=always"
+    git config --global alias.dlog  "log -p --ext-diff"
+    git config --global alias.dshow "show --ext-diff"
+fi
+
+# mergiraf: syntax-aware merge driver. diff3 conflict style gives it the base
+# revision it needs to reconstruct all three sides. The driver string is safe
+# on git < 2.44 too — mergiraf detects the unexpanded %S/%X/%Y placeholders
+# and falls back gracefully (see mergiraf docs).
+if command -v mergiraf >/dev/null 2>&1; then
+    git config --global merge.conflictStyle diff3
+    git config --global merge.mergiraf.name mergiraf
+    git config --global merge.mergiraf.driver 'mergiraf merge --git %O %A %B -s %S -x %X -y %Y -p %P -l %L'
+    mkdir -p "$CONFIG_HOME/git"
+    if ! grep -Fq 'merge=mergiraf' "$CONFIG_HOME/git/attributes" 2>/dev/null; then
+        echo '* merge=mergiraf' >> "$CONFIG_HOME/git/attributes"
+    fi
 fi
 
 add_line() {
@@ -394,8 +440,7 @@ if command -v yazi >/dev/null 2>&1 || command -v ya >/dev/null 2>&1; then
     ln -sf "$DOTFILES_DIR/yazi/yazi.toml" "$CONFIG_HOME/yazi/yazi.toml"
 fi
 
-# lazygit: route diffs through delta in side-by-side mode (lazygit has
-# no native side-by-side toggle of its own)
+# lazygit: render diffs through difftastic (structural diff)
 if command -v lazygit >/dev/null 2>&1; then
     mkdir -p "$CONFIG_HOME/lazygit"
     ln -sf "$DOTFILES_DIR/lazygit/config.yml" "$CONFIG_HOME/lazygit/config.yml"

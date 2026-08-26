@@ -18,6 +18,8 @@ dotfiles/
 │       ├── dev.kdl         # files (yazi) + editor (hx) + console + llms + git
 │       ├── rsdev.kdl       # same as dev, no console tab; 4-console Rust ops tab
 │       └── pydev.kdl       # same as dev, no console tab; 4-console Python ops tab
+├── lazygit/
+│   └── config.yml          # difftastic as the diff renderer
 └── scripts/
     └── mdp.sh              # live markdown preview (glow + entr), installed as `mdp`
 ```
@@ -36,6 +38,10 @@ Debug from Helix with `:debug-start` (or bind a key to it) once a binary
 exists — it'll ask for the path to the compiled binary using the templates
 in `languages.toml`.
 
+rust-analyzer shows inlay type hints (binding modes, elided lifetimes,
+closure return types, full function signatures) — tune them under
+`language-server.rust-analyzer.config` in `languages.toml`.
+
 ## Do you need per-project setup?
 
 Mostly no — the global config handles the LSPs/formatters automatically:
@@ -47,10 +53,11 @@ Mostly no — the global config handles the LSPs/formatters automatically:
   non-standard.
 - **C / C++**: this is the one exception — clangd needs a
   `compile_commands.json` per project to know your include paths and flags.
-  Generate it with `bear -- make`, or with CMake add
-  `-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`. Without it, clangd still works but
-  loses accurate completion/diagnostics for anything outside the standard
-  library.
+  `bear` is installed for exactly this: run `bear -- make`, or with CMake add
+  `-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`. With it, clangd also auto-inserts
+  missing `#include`s (`--header-insertion=iwyu`); without it, that and
+  accurate completion/diagnostics for anything outside the standard library
+  are lost.
 
 ## Install
 
@@ -63,8 +70,9 @@ chmod +x install.sh
 
 Detects macOS (Homebrew), Debian/Ubuntu (apt), or Arch (pacman); installs
 Helix/Alacritty/Zellij, each language's toolchain/LSP, `lldb-dap`,
-`cargo-watch`, `glow`, `entr`, and `resvg` (SVG rasterizer); symlinks
-everything into `~/.config/` and drops the `mdp` script on your `PATH`.
+`cargo-watch`, `glow`, `entr`, `bear`, `difftastic`, `mergiraf`, and `resvg`
+(SVG rasterizer); symlinks everything into `~/.config/` and drops the `mdp`
+script on your `PATH`.
 
 Notes on packages it can't get from apt directly:
 - **Helix** on Ubuntu — not in the default repos, so the script adds the
@@ -146,6 +154,36 @@ Python / uv aliases (the cargo-equivalent workflow, powered by [uv](https://docs
 
 To use `pt`/`pw`/`ptk`, add `pytest` as a project dev-dependency once:
 `uv add --dev pytest` (add `pytest-watch` too for `pw`).
+
+## Git diffs, merges & conflict resolution
+
+Three tools make reviewing and merging code less tedious, wired up by
+`install.sh`:
+
+| Tool        | Role                                                            |
+|-------------|-----------------------------------------------------------------|
+| [difftastic](https://difftastic.wilfred.me.uk/) | syntax-aware (structural) diffs — `git diff` and lazygit |
+| [mergiraf](https://mergiraf.org/)  | syntax-aware merge driver — auto-resolves `merge`/`rebase`/`cherry-pick` conflicts |
+| `rerere` (git built-in) | records how you resolved a conflict and replays it next time |
+
+- **difftastic** is set as git's external diff (`diff.external`), so plain
+  `git diff` shows structural diffs. `delta` stays on as the pager for
+  `git log`/`show`/`blame` and `git add -p`. lazygit renders its diff pane
+  through difftastic too.
+- **mergiraf** is registered as the `mergiraf` merge driver and applied to all
+  files via the global gitattributes (`~/.config/git/attributes`); `diff3`
+  conflict style is enabled so it can reconstruct all three sides. When it
+  auto-resolves a conflict it asks you to review with `mergiraf review <id>`.
+- **rerere** is enabled (`rerere.enabled`), so conflicts you've solved once are
+  re-applied automatically the next time they show up.
+
+| Command               | What it does |
+|-----------------------|--------------|
+| `git diff`            | structural diff via difftastic (opt out with `--no-ext-diff`) |
+| `git dlog`            | `git log -p` with difftastic |
+| `git dshow`           | `git show` with difftastic |
+| `mergiraf review <id>`| review a conflict mergiraf auto-resolved |
+| `mergiraf solve <f>`  | attempt to auto-resolve an existing conflicted file |
 
 Inside the session (`dev`):
 

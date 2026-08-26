@@ -30,8 +30,10 @@ language-servers = ["rust-analyzer"]
 [language-server.rust-analyzer.config]
 check.command = "clippy"
 cargo.features = "all"
-inlayHints.bindingModeHints.enable = false
-inlayHints.closureReturnTypeHints.enable = true
+inlayHints.bindingModeHints.enable = true
+inlayHints.closureReturnTypeHints.enable = "with_block"
+inlayHints.lifetimeElisionHints.enable = "skip_trivial"
+completion.fullFunctionSignatures.enable = true
 
 [language.debugger]
 name = "lldb-dap"
@@ -99,7 +101,7 @@ args = { program = "{0}" }
 
 [language-server.clangd]
 command = "clangd"
-args = ["--header-insertion=never", "--clang-tidy", "--background-index"]
+args = ["--header-insertion=iwyu", "--clang-tidy", "--background-index", "--completion-style=detailed", "--function-arg-placeholders"]
 
 # Forester behavior-tree language (added by forester-lsp)
 [language-server.forester-lsp]

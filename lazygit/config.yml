@@ -1,0 +1,4 @@
+git:
+  diffRenderers:
+    - type: extDiff
+      command: difft --color=always
