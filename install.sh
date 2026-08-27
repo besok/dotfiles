@@ -61,7 +61,9 @@ ensure_rust() {
 # -------------------------------------------------------------------
 echo "==> Installing helix, alacritty, zellij..."
 case "$PKG" in
-    brew)   install_pkgs helix alacritty zellij ;;
+    brew)   # bash: macOS ships a frozen bash 3.2 at /bin/bash; install a
+            # current bash 5.x (used as the Alacritty shell)
+            install_pkgs bash helix alacritty zellij ;;
     apt)    install_pkgs alacritty
             # Prefer snap for Helix — the maveonair PPA has lagged noticeably
             # behind upstream releases (confirmed: PPA stuck at 24.7 while
@@ -179,11 +181,17 @@ if ! command -v uv >/dev/null 2>&1; then
     curl -LsSf https://astral.sh/uv/install.sh | sh
 fi
 
-# pytest + pytest-watch (ptw): test runner and watch-mode for `pt`/`pw`/
-# `ptk`. Installed globally as a fallback; prefer adding them as project
+# pytest + pytest-watcher (ptw): test runner and watch-mode for `pt`/`pw`/
+# `ptk`. pytest-watcher replaces the abandoned pytest-watch (same `ptw`
+# command, but the watch path is a required argument: `ptw .`).
+# Installed globally as a fallback; prefer adding them as project
 # dev-deps via `uv add --dev pytest` for per-project environments.
-pipx install pytest        --force || echo "!! pytest install failed."
-pipx install pytest-watch  --force || echo "!! pytest-watch install failed."
+pipx install pytest          --force || echo "!! pytest install failed."
+# pytest-watcher's `watchdog` dep ships no CPython 3.14 wheel yet and its
+# C-extension source build fails on macOS; fall back to a managed 3.13.
+pipx install pytest-watcher  --force \
+    || pipx install pytest-watcher --force --python 3.13 --fetch-missing-python \
+    || echo "!! pytest-watcher install failed."
 
 # -------------------------------------------------------------------
 # 6. Rust: rustup toolchain + rust-analyzer + clippy + cargo subcommands
@@ -392,6 +400,20 @@ if command -v mergiraf >/dev/null 2>&1; then
     fi
 fi
 
+# The rc-file helpers below only append to files that already exist, so make
+# sure they do — on a fresh macOS there's typically no ~/.bashrc or ~/.zshrc.
+touch "$HOME/.bashrc" "$HOME/.zshrc"
+
+# macOS quirk: bash *login* shells (what Alacritty/Terminal.app spawn) read
+# ~/.bash_profile and never ~/.bashrc, so everything this script appends to
+# .bashrc would be silently skipped. Chain them.
+if [[ "$OS" == "Darwin" ]]; then
+    if ! grep -Fq '.bashrc' "$HOME/.bash_profile" 2>/dev/null; then
+        printf '\n[ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc"\n' >> "$HOME/.bash_profile"
+        echo "==> Added ~/.bashrc sourcing to ~/.bash_profile"
+    fi
+fi
+
 add_line() {
     local rc_file="$1" line="$2"
     if [[ -f "$rc_file" ]] && ! grep -Fq "$line" "$rc_file"; then
@@ -399,13 +421,15 @@ add_line() {
     fi
 }
 
-if command -v zoxide >/dev/null 2>&1; then
-    add_line "$HOME/.bashrc" 'eval "$(zoxide init bash)"'
-    add_line "$HOME/.zshrc"  'eval "$(zoxide init zsh)"'
-fi
 if command -v starship >/dev/null 2>&1; then
     add_line "$HOME/.bashrc" 'eval "$(starship init bash)"'
     add_line "$HOME/.zshrc"  'eval "$(starship init zsh)"'
+fi
+# zoxide wants to be initialized at the end of the rc file (after anything
+# that installs prompt hooks, like starship), otherwise its doctor warns.
+if command -v zoxide >/dev/null 2>&1; then
+    add_line "$HOME/.bashrc" 'eval "$(zoxide init bash)"'
+    add_line "$HOME/.zshrc"  'eval "$(zoxide init zsh)"'
 fi
 
 # Set Helix as the default $EDITOR/$VISUAL — respected by yazi's built-in
@@ -431,6 +455,7 @@ ln -sf "$DOTFILES_DIR/zellij/layouts/rsdev.kdl" "$CONFIG_HOME/zellij/layouts/rsd
 ln -sf "$DOTFILES_DIR/zellij/layouts/pydev.kdl" "$CONFIG_HOME/zellij/layouts/pydev.kdl"
 ln -sf "$DOTFILES_DIR/starship/starship.toml"   "$CONFIG_HOME/starship.toml"
 ln -sf "$DOTFILES_DIR/scripts/mdp.sh"           "$LOCAL_BIN/mdp"
+ln -sf "$DOTFILES_DIR/scripts/llm.sh"           "$LOCAL_BIN/llm"
 
 # yazi: route Enter on text/code files to Helix instead of yazi's default
 # opener (block=true hands the terminal fully to hx instead of trying to
@@ -503,7 +528,7 @@ done
 # pl    - lint (ruff check)
 # pcx   - lint with auto-fixes applied (ruff check --fix)
 # pt    - run the full test suite (uv run pytest)
-# pw    - run tests on every save (uv run ptw)
+# pw    - run tests on every save (uv run ptw ., via pytest-watcher)
 for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
     add_alias "$rc" "alias pvenv='uv venv'"
     add_alias "$rc" "alias pd='uv sync'"
@@ -514,7 +539,7 @@ for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
     add_alias "$rc" "alias pl='ruff check .'"
     add_alias "$rc" "alias pcx='ruff check --fix .'"
     add_alias "$rc" "alias pt='uv run pytest'"
-    add_alias "$rc" "alias pw='uv run ptw'"
+    add_alias "$rc" "alias pw='uv run ptw .'"
 done
 
 # y(): launch yazi, and if you cd'd somewhere inside it, land your shell

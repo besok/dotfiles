@@ -44,7 +44,7 @@ layout {
     // Tab 4: LLM assistant CLI
     tab name="llms" {
     pane command="bash" {
-        args "-c" "opencode; ~/.config/alacritty/notify-bell.sh"
+        args "-c" "~/.local/bin/llm"
       }
    }
 

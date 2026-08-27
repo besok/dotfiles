@@ -1,7 +1,7 @@
 # hx + alacritty + zellij dotfiles
 
 A fast, light-themed dev setup for Python, Rust, Zig, C++, and C, with an
-LLM CLI tab and desktop notifications when a tool needs your input.
+LLM CLI tab.
 
 ```
 dotfiles/
@@ -10,8 +10,7 @@ dotfiles/
 │   ├── config.toml         # editor look & feel (Catppuccin Latte)
 │   └── languages.toml      # LSPs, formatters, debug adapters per language
 ├── alacritty/
-│   ├── alacritty.toml      # terminal appearance, maximized, opens into zellij
-│   └── notify-bell.sh      # desktop notification on terminal bell
+│   └── alacritty.toml      # terminal appearance, maximized, opens into zellij
 ├── zellij/
 │   ├── config.kdl          # keybindings, theme, mouse behavior
 │   └── layouts/
@@ -21,6 +20,7 @@ dotfiles/
 ├── lazygit/
 │   └── config.yml          # difftastic as the diff renderer
 └── scripts/
+    ├── llm.sh              # picks the LLM CLI per machine, installed as `llm`
     └── mdp.sh              # live markdown preview (glow + entr), installed as `mdp`
 ```
 
@@ -148,12 +148,12 @@ Python / uv aliases (the cargo-equivalent workflow, powered by [uv](https://docs
 | `pl`    | Lint (`ruff check .`) |
 | `pcx`   | Lint with auto-fixes (`ruff check --fix .`) |
 | `pt`    | Run the full test suite (`uv run pytest`) |
-| `pw`    | Run tests on every save (`uv run ptw`) |
+| `pw`    | Run tests on every save (`uv run ptw .`, via pytest-watcher) |
 | `ptk`   | Fuzzy-pick and run a single pytest test (uv + fzf) |
 | `pm`    | Run a Python entrypoint via `.venv/bin/python` (defaults to `main.py`) |
 
 To use `pt`/`pw`/`ptk`, add `pytest` as a project dev-dependency once:
-`uv add --dev pytest` (add `pytest-watch` too for `pw`).
+`uv add --dev pytest` (add `pytest-watcher` too for `pw`).
 
 ## Git diffs, merges & conflict resolution
 
@@ -192,8 +192,10 @@ Inside the session (`dev`):
   session.
 - **Tab 2 — `editor`**: Helix open on `.`, full pane — no shell underneath.
 - **Tab 3 — `console`**: a scratch shell for builds and ad-hoc commands.
-- **Tab 4 — `llms`**: launches `opencode` automatically. Swap the `command`
-  in `zellij/layouts/dev.kdl` if you use a different LLM CLI.
+- **Tab 4 — `llms`**: launches `llm` (`scripts/llm.sh`), which picks whichever
+  LLM CLI this machine has — `claude` or `opencode`, in that order. Set
+  `export LLM_CLI=<cmd>` in your shell rc to force a specific one, so the
+  shared layouts stay identical across machines.
 - **Tab 5 — `git`**: lazygit, for status/diff/stage/commit without leaving
   the session.
 

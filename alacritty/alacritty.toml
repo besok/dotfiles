@@ -1,3 +1,4 @@
+[general]
 live_config_reload = true
 
 [window]
@@ -50,7 +51,7 @@ alphabet = "jfkdlsahgurieowpq"
 [[hints.enabled]]
 regex = "(ipfs:|ipns:|magnet:|mailto:|gemini:|gopher:|https?:|news:|file:|git:)[^\\s\"'<>`]+"
 hyperlinks = true
-command = "xdg-open"
+command = "open" # macOS; use "xdg-open" on Linux
 post_processing = true
 mouse = { enabled = true }
 
@@ -91,8 +92,11 @@ magenta = "#ea76cb"
 cyan    = "#179299"
 white   = "#bcc0cc"
 
-[shell]
-program = "/bin/bash"
+# Alacritty >= 0.13 expects [terminal.shell]; the old top-level [shell]
+# only logs a deprecation warning. /bin/bash on macOS is the frozen 3.2,
+# so use Homebrew's bash 5.x. On Linux, point this at /usr/bin/bash.
+[terminal.shell]
+program = "/opt/homebrew/bin/bash"
 args = ["-l"]
 
 [keyboard]
