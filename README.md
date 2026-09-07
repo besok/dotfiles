@@ -3,9 +3,28 @@
 A fast, light-themed dev setup for Python, Rust, Zig, C++, and C, with an
 LLM CLI tab.
 
+## Screenshots
+
+`dev` layout:
+
+![dev](screenshots/dev.png)
+
+`files` tab:
+
+![files](screenshots/files.png)
+
+git blame:
+
+![git_blame](screenshots/git_blame.png)
+
+`rt` (run test):
+
+![rt](screenshots/rt.png)
+
 ```
 dotfiles/
 ├── install.sh              # installs everything + symlinks configs
+├── uninstall.sh            # reverses install.sh (symlinks, rc edits, git config)
 ├── helix/
 │   ├── config.toml         # editor look & feel (Catppuccin Latte)
 │   └── languages.toml      # LSPs, formatters, debug adapters per language
@@ -19,9 +38,11 @@ dotfiles/
 │       └── pydev.kdl       # same as dev, no console tab; 4-console Python ops tab
 ├── lazygit/
 │   └── config.yml          # difftastic as the diff renderer
+├── screenshots/            # README images
 └── scripts/
     ├── llm.sh              # picks the LLM CLI per machine, installed as `llm`
-    └── mdp.sh              # live markdown preview (glow + entr), installed as `mdp`
+    ├── mdp.sh              # live markdown preview (glow + entr), installed as `mdp`
+    └── doctor.sh           # health check, installed as `doctor`
 ```
 
 ## What each language gets
@@ -75,9 +96,38 @@ Helix/Alacritty/Zellij, each language's toolchain/LSP, `lldb-dap`,
 script on your `PATH`.
 
 Notes on packages it can't get from apt directly:
-- **Helix** on Ubuntu — not in the default repos, so the script adds the
-  official PPA (`ppa:maveonair/helix-editor`) and installs from there. On
-  non-Ubuntu
+- **Helix** on Ubuntu — not in the default repos, so the script prefers the
+  official snap (current releases), falling back to the maveonair PPA
+  (`ppa:maveonair/helix-editor`) when snapd isn't installed. On non-Ubuntu
+  Debian it points you at the release tarballs on GitHub.
+- **glow** — installed from Charm's apt repo.
+- **eza**, **gh**, **lazygit**, **starship** — installed from their official
+  apt repos / release tarballs as needed.
+
+## Doctor
+
+`install.sh` symlinks `scripts/doctor.sh` onto your `PATH` as `doctor`. It
+verifies the setup is still intact — binaries present, config symlinks
+pointing back into this repo, git diff/merge config wired, and the aliases/
+functions present in your shell rc — and prints a PASS/FAIL per check,
+exiting non-zero if anything is missing. Run it any time to catch drift
+after a package-manager update:
+
+```bash
+doctor
+```
+
+## Uninstall
+
+`uninstall.sh` reverses everything `install.sh` did: removes the config
+symlinks, strips the aliases/functions it appended to `~/.bashrc`/`~/.zshrc`,
+and reverts the git config it touched. It only removes entries it recognizes,
+so your own additions are left alone:
+
+```bash
+cd ~/dotfiles
+./uninstall.sh
+```
 
 ## Day-to-day use
 
@@ -86,11 +136,10 @@ cd ~/some-project
 dev
 ```
 
-`dev` is a small wrapper (`scripts/dev.sh`) that opens a Zellij session
-using the `dev` layout, named after the current folder — so each project
-gets its own persistent session. Run `dev` again from the same folder later
-and it reattaches instead of starting fresh; your panes, running builds,
-and the `llms` tab pick up right where you left off.
+`dev` is an alias (`zellij --layout dev`) added to your shell rc by
+`install.sh`. It opens a Zellij session with the `dev` layout and attaches
+to the running session if one already exists, so your panes, running
+builds, and the `llms` tab pick up right where you left off.
 
 If you'd rather launch straight from your desktop instead of an existing
 terminal, open Alacritty (maximized, light Catppuccin Latte colors) and

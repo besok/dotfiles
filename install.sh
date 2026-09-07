@@ -468,6 +468,7 @@ ln -sf "$DOTFILES_DIR/zellij/layouts/pydev.kdl" "$CONFIG_HOME/zellij/layouts/pyd
 ln -sf "$DOTFILES_DIR/starship/starship.toml"   "$CONFIG_HOME/starship.toml"
 ln -sf "$DOTFILES_DIR/scripts/mdp.sh"           "$LOCAL_BIN/mdp"
 ln -sf "$DOTFILES_DIR/scripts/llm.sh"           "$LOCAL_BIN/llm"
+ln -sf "$DOTFILES_DIR/scripts/doctor.sh"        "$LOCAL_BIN/doctor"
 
 # yazi: route Enter on text/code files to Helix instead of yazi's default
 # opener (block=true hands the terminal fully to hx instead of trying to
