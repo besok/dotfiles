@@ -449,6 +449,18 @@ mkdir -p "$CONFIG_HOME/helix" "$CONFIG_HOME/alacritty" "$CONFIG_HOME/zellij/layo
 ln -sf "$DOTFILES_DIR/helix/config.toml"        "$CONFIG_HOME/helix/config.toml"
 ln -sf "$DOTFILES_DIR/helix/languages.toml"     "$CONFIG_HOME/helix/languages.toml"
 ln -sf "$DOTFILES_DIR/alacritty/alacritty.toml" "$CONFIG_HOME/alacritty/alacritty.toml"
+
+# Alacritty shell: macOS ships a frozen bash 3.2 at /bin/bash, so point it at
+# Homebrew's bash 5.x there; Linux uses the system bash. Written to a separate
+# file imported by alacritty.toml because the repo config is shared across
+# machines and the path differs per-OS.
+ALACRITTY_SHELL="/usr/bin/bash"
+[[ "$OS" == "Darwin" ]] && ALACRITTY_SHELL="/opt/homebrew/bin/bash"
+{
+    printf '[terminal.shell]\n'
+    printf 'program = "%s"\n' "$ALACRITTY_SHELL"
+    printf 'args = ["-l"]\n'
+} > "$CONFIG_HOME/alacritty/shell.toml"
 ln -sf "$DOTFILES_DIR/zellij/config.kdl"        "$CONFIG_HOME/zellij/config.kdl"
 ln -sf "$DOTFILES_DIR/zellij/layouts/dev.kdl"   "$CONFIG_HOME/zellij/layouts/dev.kdl"
 ln -sf "$DOTFILES_DIR/zellij/layouts/rsdev.kdl" "$CONFIG_HOME/zellij/layouts/rsdev.kdl"
