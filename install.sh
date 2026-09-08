@@ -539,11 +539,24 @@ if [[ -d "$DOTFILES_DIR/scripts" ]]; then
     chmod +x "$DOTFILES_DIR"/scripts/*.sh
 fi
 
+# has_func RC NAME: true if the rc file already defines a shell function NAME
+# (`name() {` or `function name`). Used to keep our aliases/functions from
+# shadowing hand-written ones — and to avoid a bash parse error: once an
+# alias `pvenv` exists, re-sourcing a file that later defines `pvenv() {...}`
+# expands the alias mid-definition and fails with "syntax error near `('".
+has_func() {
+    local rc_file="$1" name="$2"
+    grep -Eq "^[[:space:]]*(function[[:space:]]+)?${name}[[:space:]]*\(\)" "$rc_file" 2>/dev/null
+}
+
 # Add zellij layout aliases to rc files
 add_alias() {
-    local rc_file="$1" alias_cmd="$2"
+    local rc_file="$1" alias_cmd="$2" name
+    name="${alias_cmd#alias }"; name="${name%%=*}"
     if [[ -f "$rc_file" ]]; then
-        if ! grep -Fq "$alias_cmd" "$rc_file"; then
+        if has_func "$rc_file" "$name"; then
+            echo "   skip alias $name — $rc_file defines a $name() function"
+        elif ! grep -Fq "$alias_cmd" "$rc_file"; then
             echo "==> Adding $alias_cmd to $rc_file"
             echo "$alias_cmd" >> "$rc_file"
         fi
@@ -615,6 +628,9 @@ add_yazi_function() {
     if [[ -f "$rc_file" ]]; then
         if grep -Fq "$marker" "$rc_file"; then
             sed -i.bak '/^# y(): launch yazi/,/^}$/d' "$rc_file"
+        elif has_func "$rc_file" "y"; then
+            echo "   skip y() — $rc_file already defines its own y()"
+            return 0
         fi
         echo "==> Adding y() yazi wrapper to $rc_file"
         cat >> "$rc_file" <<'EOF'
@@ -650,6 +666,9 @@ add_function() {
         # stale duplicate.
         if grep -Fq "$marker" "$rc_file"; then
             sed -i.bak '/^# rt(): fuzzy-pick/,/^}$/d' "$rc_file"
+        elif has_func "$rc_file" "rt"; then
+            echo "   skip rt() — $rc_file already defines its own rt()"
+            return 0
         fi
         echo "==> Adding rt() test-picker function to $rc_file"
         cat >> "$rc_file" <<'EOF'
@@ -678,6 +697,9 @@ add_ptk_function() {
     if [[ -f "$rc_file" ]]; then
         if grep -Fq "$marker" "$rc_file"; then
             sed -i.bak '/^# ptk(): fuzzy-pick/,/^}$/d' "$rc_file"
+        elif has_func "$rc_file" "ptk"; then
+            echo "   skip ptk() — $rc_file already defines its own ptk()"
+            return 0
         fi
         echo "==> Adding ptk() test-picker function to $rc_file"
         cat >> "$rc_file" <<'EOF'
@@ -706,6 +728,9 @@ add_pm_function() {
     if [[ -f "$rc_file" ]]; then
         if grep -Fq "$marker" "$rc_file"; then
             sed -i.bak '/^# pm(): run a Python/,/^}$/d' "$rc_file"
+        elif has_func "$rc_file" "pm"; then
+            echo "   skip pm() — $rc_file already defines its own pm()"
+            return 0
         fi
         echo "==> Adding pm() entrypoint runner to $rc_file"
         cat >> "$rc_file" <<'EOF'

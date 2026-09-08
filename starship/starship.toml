@@ -59,7 +59,9 @@ ahead = "⇡${count}"
 behind = "⇣${count}"
 diverged = "⇕⇡${ahead_count}⇣${behind_count}"
 untracked = "?"
-stashed = "$"
+# A bare "$" is a variable start in starship format strings (parse error),
+# and starship 1.26 renders the escaped "\$" with a literal backslash.
+stashed = "≡${count}"
 modified = "!"
 staged = "+${count}"
 renamed = "»"
