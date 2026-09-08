@@ -30,6 +30,8 @@ dotfiles/
 │   └── languages.toml      # LSPs, formatters, debug adapters per language
 ├── alacritty/
 │   └── alacritty.toml      # terminal appearance, maximized, opens into zellij
+├── zed/
+│   └── settings.json       # One Light, JetBrains keymap, autosave-as-you-type, LSP tweaks
 ├── zellij/
 │   ├── config.kdl          # keybindings, theme, mouse behavior
 │   └── layouts/
@@ -90,19 +92,49 @@ chmod +x install.sh
 ```
 
 Detects macOS (Homebrew), Debian/Ubuntu (apt), or Arch (pacman); installs
-Helix/Alacritty/Zellij, each language's toolchain/LSP, `lldb-dap`,
-`cargo-watch`, `glow`, `entr`, `bear`, `difftastic`, `mergiraf`, and `resvg`
-(SVG rasterizer); symlinks everything into `~/.config/` and drops the `mdp`
-script on your `PATH`.
+Helix/Alacritty/Zellij, Zed (GUI editor, with its `zed` CLI on `PATH`),
+each language's toolchain/LSP, `lldb-dap`, `cargo-watch`, `glow`, `entr`,
+`bear`, `difftastic`, `mergiraf`, and `resvg` (SVG rasterizer); symlinks
+everything into `~/.config/`, puts `~/.local/bin` on your `PATH` and drops
+the `mdp`/`llm`/`doctor` scripts there.
 
 Notes on packages it can't get from apt directly:
 - **Helix** on Ubuntu — not in the default repos, so the script prefers the
   official snap (current releases), falling back to the maveonair PPA
   (`ppa:maveonair/helix-editor`) when snapd isn't installed. On non-Ubuntu
   Debian it points you at the release tarballs on GitHub.
+- **Zed** — no apt package; installed with Zed's official installer
+  (`https://zed.dev/install.sh`, lands in `~/.local/zed.app` with the CLI
+  linked to `~/.local/bin/zed`). On macOS it's the `zed` Homebrew cask; if
+  `Zed.app` was already downloaded by hand, the script just links its CLI
+  to `~/.local/bin/zed`.
 - **glow** — installed from Charm's apt repo.
 - **eza**, **gh**, **lazygit**, **starship** — installed from their official
   apt repos / release tarballs as needed.
+
+## Zed
+
+`zed .` from a project root opens the whole tree as a workspace. The
+settings in `zed/settings.json` are symlinked to `~/.config/zed/settings.json`
+(your previous file is kept as `settings.json.bak`) and set:
+
+- **One Light** theme, JetBrainsMono Nerd Font, 100-column guide, no relative
+  line numbers — the same look as the Helix/Alacritty setup.
+- **JetBrains keymap** plus IntelliJ-style **autosave**: the buffer is written
+  0.5 s after you stop typing and on focus loss, so there is no "unsaved"
+  state to think about. Formatting (rustfmt/ruff) only runs on an explicit
+  Cmd-S so autosave never rewrites what you are typing.
+- rust-analyzer runs **clippy** on check; Python uses **pyright + ruff**, the
+  same servers install.sh puts on PATH.
+- Inline git blame on the current line.
+- Extensions auto-installed on first launch: zig, toml, kdl, just,
+  dockerfile, make, sql, env, log, csv.
+- Privacy: telemetry off and edit prediction disabled (it would stream
+  buffer contents to Zed's servers).
+
+On Ubuntu the script also installs `libvulkan1` + `mesa-vulkan-drivers`: Zed
+renders through Vulkan, and the Mesa package provides a software fallback so
+it still starts in VMs without a GPU driver.
 
 ## Doctor
 

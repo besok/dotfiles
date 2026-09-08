@@ -1,0 +1,100 @@
+// Zed user settings — symlinked to ~/.config/zed/settings.json by install.sh.
+// Reference: https://zed.dev/docs/configuring-zed ; `zed: open default settings`
+// in the command palette shows every default this file overrides.
+{
+  // ---- Look & feel: light One theme, same font as Alacritty/Helix -------
+  "theme": {
+    "mode": "light",
+    "light": "One Light",
+    "dark": "One Dark"
+  },
+  "ui_font_size": 16,
+  "buffer_font_size": 16,
+  "buffer_font_family": "JetBrainsMono Nerd Font",
+  "cursor_blink": false,
+  "relative_line_numbers": false,
+  "wrap_guides": [100],
+  "show_wrap_guides": true,
+  "preferred_line_length": 100,
+  "soft_wrap": "none",
+  "indent_guides": { "enabled": true },
+  "show_whitespaces": "selection",
+  "tab_size": 4,
+  "tabs": { "file_icons": true, "git_status": true },
+  "toolbar": { "breadcrumbs": true },
+
+  // ---- IntelliJ-style workflow ------------------------------------------
+  // JetBrains keybindings (Ctrl/Cmd-S, Shift-Shift search, etc.).
+  "base_keymap": "JetBrains",
+  // Alternative: modal editing with Helix keys (built on Zed's vim mode).
+  // Flip this on and Zed behaves like hx for movement/selection while the
+  // JetBrains bindings above still cover IDE actions (search, run, debug).
+  // "helix_mode": true,
+  // Save like IntelliJ: continuously while typing (0.5s after the last
+  // keystroke) *and* whenever the editor loses focus — no explicit save
+  // needed. Autosave does not trigger formatters; only an explicit Cmd-S
+  // runs format_on_save below.
+  "autosave": { "after_delay": { "milliseconds": 500 } },
+  "restore_on_startup": "last_session",
+  "format_on_save": "on",
+  "ensure_final_newline_on_save": true,
+  "remove_trailing_whitespace_on_save": true,
+
+  // ---- LSP / language tooling (mirrors helix/languages.toml) ------------
+  "inlay_hints": { "enabled": true },
+  "lsp": {
+    "rust-analyzer": {
+      "initialization_options": {
+        "check": { "command": "clippy" }
+      }
+    }
+  },
+  "languages": {
+    "Python": {
+      // pyright + ruff are what install.sh puts on PATH (via pipx)
+      "language_servers": ["pyright", "ruff", "!basedpyright", "..."],
+      "formatter": { "language_server": { "name": "ruff" } }
+    }
+  },
+
+  // ---- Git: inline blame on the current line (like `space B` in Helix) --
+  "git": {
+    "git_gutter": "tracked_files",
+    "inline_blame": { "enabled": true, "delay_ms": 800 }
+  },
+
+  // ---- Panels -----------------------------------------------------------
+  "project_panel": { "dock": "left" },
+  "outline_panel": { "dock": "left" },
+  "git_panel": { "dock": "left" },
+  "collaboration_panel": { "dock": "left" },
+  "agent": { "dock": "right" },
+  "terminal": {
+    "font_family": "JetBrainsMono Nerd Font",
+    "font_size": 14
+  },
+
+  // ---- Extensions: installed automatically on first launch --------------
+  // Rust, Python, C/C++, JSON, YAML, Markdown are built in. These cover the
+  // rest of the stack in this repo (zig/zls, Cargo.toml + pyproject.toml,
+  // zellij's KDL configs, justfiles, Docker/Make in C projects).
+  "auto_install_extensions": {
+    "zig": true,
+    "toml": true,
+    "kdl": true,
+    "just": true,
+    "dockerfile": true,
+    "make": true,
+    "sql": true,
+    "env": true,
+    "log": true,
+    "csv": true
+  },
+
+  // ---- Privacy -----------------------------------------------------------
+  // No usage/crash telemetry, and no edit prediction: Zed's built-in
+  // predictor streams buffer contents to Zed's servers while you type.
+  "telemetry": { "diagnostics": false, "metrics": false },
+  "features": { "edit_prediction_provider": "none" },
+  "show_edit_predictions": false
+}

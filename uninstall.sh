@@ -50,11 +50,18 @@ rm_link "$CONFIG_HOME/zellij/layouts/dev.kdl"
 rm_link "$CONFIG_HOME/zellij/layouts/rsdev.kdl"
 rm_link "$CONFIG_HOME/zellij/layouts/pydev.kdl"
 rm_link "$CONFIG_HOME/starship.toml"
+rm_link "$CONFIG_HOME/zed/settings.json"
 rm_link "$CONFIG_HOME/yazi/yazi.toml"
 rm_link "$CONFIG_HOME/lazygit/config.yml"
 rm_link "$LOCAL_BIN/mdp"
 rm_link "$LOCAL_BIN/llm"
 rm_link "$LOCAL_BIN/doctor"
+
+# ~/.local/bin/zed: install.sh links the Zed.app CLI here on macOS when the
+# app was installed outside Homebrew. Only remove it if it's that link.
+if [[ -L "$LOCAL_BIN/zed" && "$(readlink "$LOCAL_BIN/zed")" == /Applications/Zed.app/* ]]; then
+    rm -f "$LOCAL_BIN/zed" && echo "   removed $LOCAL_BIN/zed"
+fi
 
 # alacritty/shell.toml is a generated file, not a symlink — remove it too.
 rm -f "$CONFIG_HOME/alacritty/shell.toml" && echo "   removed $CONFIG_HOME/alacritty/shell.toml"
@@ -106,6 +113,7 @@ for rc in "${rcs[@]}"; do
     for a in "${aliases[@]}"; do
         strip_line "$rc" "$a"
     done
+    strip_line "$rc" 'case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) export PATH="$HOME/.local/bin:$PATH" ;; esac  # dotfiles: ~/.local/bin (zed, uv, pipx, mdp/llm/doctor)'
     strip_line "$rc" 'export EDITOR="hx"'
     strip_line "$rc" 'export VISUAL="hx"'
     strip_line "$rc" 'eval "$(starship init bash)"'

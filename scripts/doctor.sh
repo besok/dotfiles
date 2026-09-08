@@ -30,7 +30,7 @@ section "binaries"
 for b in hx alacritty zellij git; do
   have "$b" && ok "$b" || bad "$b (not on PATH)"
 done
-for b in cargo uv python3 rust-analyzer lldb-dap glow entr bear yazi \
+for b in zed cargo uv python3 rust-analyzer lldb-dap glow entr bear yazi \
          ripgrep fzf zoxide bat eza jq delta direnv starship lazygit \
          difft mergiraf; do
   have "$b" && ok "$b" || note "$b (not found — optional until you need it)"
@@ -57,6 +57,7 @@ link "$CONFIG_HOME/zellij/layouts/dev.kdl"
 link "$CONFIG_HOME/zellij/layouts/rsdev.kdl"
 link "$CONFIG_HOME/zellij/layouts/pydev.kdl"
 link "$CONFIG_HOME/starship.toml"
+link "$CONFIG_HOME/zed/settings.json"
 link "$CONFIG_HOME/yazi/yazi.toml"
 link "$CONFIG_HOME/lazygit/config.yml"
 link "$LOCAL_BIN/mdp"
@@ -95,6 +96,7 @@ needle() {
   done
   [[ -n "$found" ]] && ok "$desc" || bad "$desc"
 }
+needle "~/.local/bin on PATH"  'dotfiles: ~/.local/bin'
 needle "EDITOR=hx"             'export EDITOR="hx"'
 needle "starship init"         'starship init'
 needle "zoxide init"           'zoxide init'

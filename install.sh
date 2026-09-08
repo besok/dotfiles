@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Installs Helix, Alacritty, Zellij, toolchains/LSPs/DAPs for
+# Installs Helix, Zed, Alacritty, Zellij, toolchains/LSPs/DAPs for
 # Python, Rust, Zig, C++, and C, plus a set of everyday CLI utilities
 # (search, navigation, git, system, prompt) — then symlinks the
 # configs in this repo into the right XDG locations and sets shell
@@ -104,6 +104,42 @@ case "$PKG" in
                 }
             fi ;;
     pacman) install_pkgs helix alacritty zellij ;;
+esac
+
+# -------------------------------------------------------------------
+# 2b. Zed: GUI editor alongside Helix. Makes sure the `zed` CLI is on
+#     PATH so `zed .` / `zed file:line` work from a shell.
+# -------------------------------------------------------------------
+echo "==> Installing zed..."
+mkdir -p "$LOCAL_BIN"
+case "$PKG" in
+    brew)
+        # The cask links the bundled CLI as `zed` into Homebrew's bin. If
+        # Zed.app was already downloaded from zed.dev the cask refuses to
+        # overwrite it, so skip the install and link the CLI ourselves
+        # (same thing Zed's "Install CLI" menu item does, minus sudo).
+        if [[ -d /Applications/Zed.app ]]; then
+            echo "   Zed.app already installed."
+        else
+            brew install --cask zed || echo "!! zed install failed — grab it from https://zed.dev/download"
+        fi
+        if ! command -v zed >/dev/null 2>&1 && [[ -x /Applications/Zed.app/Contents/MacOS/cli ]]; then
+            ln -sf /Applications/Zed.app/Contents/MacOS/cli "$LOCAL_BIN/zed"
+            echo "   Linked Zed CLI -> $LOCAL_BIN/zed"
+        fi
+        ;;
+    pacman) install_pkgs zed ;;
+    apt)
+        # Zed renders through Vulkan. libvulkan1 is the loader; the Mesa
+        # package adds the GPU drivers and a software fallback (lavapipe) so
+        # Zed still starts in VMs / boxes without a working GPU driver.
+        install_pkgs libvulkan1 mesa-vulkan-drivers || true
+        # No apt package. Zed's official installer puts the app in
+        # ~/.local/zed.app and symlinks the CLI to ~/.local/bin/zed.
+        if ! command -v zed >/dev/null 2>&1; then
+            curl -f https://zed.dev/install.sh | sh || echo "!! zed install failed — see https://zed.dev/download"
+        fi
+        ;;
 esac
 
 # -------------------------------------------------------------------
@@ -432,6 +468,13 @@ if command -v zoxide >/dev/null 2>&1; then
     add_line "$HOME/.zshrc"  'eval "$(zoxide init zsh)"'
 fi
 
+# ~/.local/bin holds the zed CLI (macOS/apt), uv, pipx apps and the
+# mdp/llm/doctor scripts. Guarded so it isn't prepended twice when a login
+# shell already exports it (e.g. ~/.bash_profile -> ~/.bashrc on macOS).
+LOCAL_BIN_PATH_LINE='case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) export PATH="$HOME/.local/bin:$PATH" ;; esac  # dotfiles: ~/.local/bin (zed, uv, pipx, mdp/llm/doctor)'
+add_line "$HOME/.bashrc" "$LOCAL_BIN_PATH_LINE"
+add_line "$HOME/.zshrc"  "$LOCAL_BIN_PATH_LINE"
+
 # Set Helix as the default $EDITOR/$VISUAL — respected by yazi's built-in
 # "open in editor" action, git commit/rebase, crontab -e, and anything
 # else that shells out to an editor rather than using per-tool config.
@@ -444,7 +487,7 @@ add_line "$HOME/.zshrc"  'export VISUAL="hx"'
 # 10. Symlink configs + helper scripts + shell aliases
 # -------------------------------------------------------------------
 echo "==> Symlinking configs into $CONFIG_HOME ..."
-mkdir -p "$CONFIG_HOME/helix" "$CONFIG_HOME/alacritty" "$CONFIG_HOME/zellij/layouts" "$LOCAL_BIN"
+mkdir -p "$CONFIG_HOME/helix" "$CONFIG_HOME/alacritty" "$CONFIG_HOME/zellij/layouts" "$CONFIG_HOME/zed" "$LOCAL_BIN"
 
 ln -sf "$DOTFILES_DIR/helix/config.toml"        "$CONFIG_HOME/helix/config.toml"
 ln -sf "$DOTFILES_DIR/helix/languages.toml"     "$CONFIG_HOME/helix/languages.toml"
@@ -466,6 +509,14 @@ ln -sf "$DOTFILES_DIR/zellij/layouts/dev.kdl"   "$CONFIG_HOME/zellij/layouts/dev
 ln -sf "$DOTFILES_DIR/zellij/layouts/rsdev.kdl" "$CONFIG_HOME/zellij/layouts/rsdev.kdl"
 ln -sf "$DOTFILES_DIR/zellij/layouts/pydev.kdl" "$CONFIG_HOME/zellij/layouts/pydev.kdl"
 ln -sf "$DOTFILES_DIR/starship/starship.toml"   "$CONFIG_HOME/starship.toml"
+
+# zed: user settings (theme, JetBrains keymap, autosave, LSP tweaks)
+mkdir -p "$CONFIG_HOME/zed"
+if [[ -f "$CONFIG_HOME/zed/settings.json" && ! -L "$CONFIG_HOME/zed/settings.json" ]]; then
+    mv "$CONFIG_HOME/zed/settings.json" "$CONFIG_HOME/zed/settings.json.bak"
+    echo "   Backed up existing zed settings to $CONFIG_HOME/zed/settings.json.bak"
+fi
+ln -sf "$DOTFILES_DIR/zed/settings.json"          "$CONFIG_HOME/zed/settings.json"
 ln -sf "$DOTFILES_DIR/scripts/mdp.sh"           "$LOCAL_BIN/mdp"
 ln -sf "$DOTFILES_DIR/scripts/llm.sh"           "$LOCAL_BIN/llm"
 ln -sf "$DOTFILES_DIR/scripts/doctor.sh"        "$LOCAL_BIN/doctor"
