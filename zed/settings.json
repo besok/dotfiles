@@ -3,6 +3,9 @@
 // in the command palette shows every default this file overrides.
 {
   // ---- Look & feel: light One theme, same font as Alacritty/Helix -------
+  "edit_predictions": {
+    "provider": "none"
+  },
   "theme": {
     "mode": "light",
     "light": "One Light",
@@ -12,7 +15,7 @@
   "buffer_font_size": 16,
   "buffer_font_family": "JetBrainsMono Nerd Font",
   "cursor_blink": false,
-  "relative_line_numbers": false,
+  "relative_line_numbers": "disabled",
   "wrap_guides": [100],
   "show_wrap_guides": true,
   "preferred_line_length": 100,
@@ -22,6 +25,20 @@
   "tab_size": 4,
   "tabs": { "file_icons": true, "git_status": true },
   "toolbar": { "breadcrumbs": true },
+  // "comfortable" is the default; switch to { "custom": 1.4 } to tighten/loosen.
+  "buffer_line_height": "comfortable",
+  // Diff, diagnostic, cursor and search markers in the scrollbar gutter.
+  "scrollbar": {
+    "show": "auto",
+    "git_diff": true,
+    "diagnostics": "all",
+    "cursors": true,
+    "search_results": true
+  },
+  // IntelliJ-style: error/warning text rendered at the end of the line.
+  "diagnostics": { "inline": { "enabled": true } },
+  "hover_popover_enabled": true,
+  "hover_popover_delay": 300,
 
   // ---- IntelliJ-style workflow ------------------------------------------
   // JetBrains keybindings (Ctrl/Cmd-S, Shift-Shift search, etc.).
@@ -29,6 +46,8 @@
   // Alternative: modal editing with Helix keys (built on Zed's vim mode).
   // Flip this on and Zed behaves like hx for movement/selection while the
   // JetBrains bindings above still cover IDE actions (search, run, debug).
+  // Still incomplete as of 2026: select-mode, some multi-cursor commands and
+  // a few `g`/`space` menus differ from real hx. Left off until it matures.
   // "helix_mode": true,
   // Save like IntelliJ: continuously while typing (0.5s after the last
   // keystroke) *and* whenever the editor loses focus — no explicit save
@@ -39,6 +58,45 @@
   "format_on_save": "on",
   "ensure_final_newline_on_save": true,
   "remove_trailing_whitespace_on_save": true,
+  // JetBrains-like bracket handling: auto-insert the closing pair and let
+  // typing the closer skip over it even after moving the cursor.
+  "use_autoclose": true,
+  "always_treat_brackets_as_autoclosed": true,
+  // Double-click a hit in project search / diagnostics to open the real file.
+  "double_click_in_multibuffer": "open",
+  // Default toggles for the search bar.
+  "search": {
+    "case_sensitive": false,
+    "whole_word": false,
+    "regex": false,
+    "include_ignored": false
+  },
+
+  // ---- Project indexing -------------------------------------------------
+  // Setting this REPLACES Zed's defaults, so the VCS/OS entries are repeated
+  // here. Build and cache dirs are excluded from search, the project panel and
+  // the file finder (rust target/, python venvs, zig caches, node_modules).
+  "file_scan_exclusions": [
+    "**/.git",
+    "**/.svn",
+    "**/.hg",
+    "**/.jj",
+    "**/CVS",
+    "**/.DS_Store",
+    "**/Thumbs.db",
+    "**/.classpath",
+    "**/.settings",
+    "**/target",
+    "**/.venv",
+    "**/venv",
+    "**/__pycache__",
+    "**/.mypy_cache",
+    "**/.ruff_cache",
+    "**/.pytest_cache",
+    "**/zig-out",
+    "**/.zig-cache",
+    "**/node_modules"
+  ],
 
   // ---- LSP / language tooling (mirrors helix/languages.toml) ------------
   "inlay_hints": { "enabled": true },
@@ -95,6 +153,5 @@
   // No usage/crash telemetry, and no edit prediction: Zed's built-in
   // predictor streams buffer contents to Zed's servers while you type.
   "telemetry": { "diagnostics": false, "metrics": false },
-  "features": { "edit_prediction_provider": "none" },
   "show_edit_predictions": false
 }
