@@ -112,6 +112,10 @@
     // imports resolve without further config.
     "pylsp": {
       "settings": {
+        // rope (used by rope_autoimport) normally writes <project>/.ropeproject/
+        // with a ~10 MB autoimport.db. null = no folder in the repo; the index
+        // is kept in memory instead and rebuilt when pylsp starts.
+        "rope": { "ropeFolder": null },
         "plugins": {
           // Linters/formatters superseded by `ruff server` below.
           "autopep8": { "enabled": false },

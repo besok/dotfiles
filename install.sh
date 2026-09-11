@@ -467,6 +467,12 @@ if command -v starship >/dev/null 2>&1; then
     add_line "$HOME/.bashrc" 'eval "$(starship init bash)"'
     add_line "$HOME/.zshrc"  'eval "$(starship init zsh)"'
 fi
+# direnv: per-directory env (.envrc). Hooked after starship so the prompt
+# sees the activated project venv; must run before zoxide (see below).
+if command -v direnv >/dev/null 2>&1; then
+    add_line "$HOME/.bashrc" 'command -v direnv >/dev/null 2>&1 && eval "$(direnv hook bash)"'
+    add_line "$HOME/.zshrc"  'command -v direnv >/dev/null 2>&1 && eval "$(direnv hook zsh)"'
+fi
 # zoxide wants to be initialized at the end of the rc file (after anything
 # that installs prompt hooks, like starship), otherwise its doctor warns.
 if command -v zoxide >/dev/null 2>&1; then
