@@ -198,7 +198,7 @@ if ! command -v lldb-dap >/dev/null 2>&1; then
 fi
 
 # -------------------------------------------------------------------
-# 5. Python: interpreter + pyright + ruff
+# 5. Python: interpreter + pylsp (jedi/mypy/rope) + ruff
 # -------------------------------------------------------------------
 echo "==> Setting up Python tooling..."
 case "$PKG" in
@@ -207,7 +207,13 @@ case "$PKG" in
     pacman) install_pkgs python python-pipx ;;
 esac
 pipx ensurepath || true
-pipx install pyright  --force
+# pylsp for Helix; Zed downloads its own copy. [rope] adds the rope_autoimport
+# plugin, pylsp-mypy brings in mypy for type checking. python-lsp-server has
+# no wheels for the newest CPython right after a release; fall back to 3.13.
+pipx install "python-lsp-server[rope]" --force \
+    || pipx install "python-lsp-server[rope]" --force --python 3.13 --fetch-missing-python \
+    || echo "!! python-lsp-server install failed."
+pipx inject python-lsp-server pylsp-mypy || echo "!! pylsp-mypy install failed."
 pipx install ruff     --force
 
 # uv: the cargo-equivalent for Python — manages virtualenvs, dependencies,

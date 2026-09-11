@@ -51,7 +51,7 @@ dotfiles/
 
 | Language | LSP           | Formatter / linter    | Debugger (DAP) |
 |----------|---------------|-------------------------|-----------------|
-| Python   | pyright       | ruff (format + lint)    | — (add `debugpy` if you need it) |
+| Python   | pylsp (jedi, mypy, rope) | ruff (format + lint) | — (add `debugpy` if you need it) |
 | Rust     | rust-analyzer | rustfmt, clippy on save | lldb-dap        |
 | Zig      | zls           | `zig fmt`                | — (zls doesn't ship DAP support yet) |
 | C++      | clangd        | clang-tidy (via clangd) | lldb-dap        |
@@ -71,9 +71,15 @@ Mostly no — the global config handles the LSPs/formatters automatically:
 
 - **Rust**: nothing extra. `cargo new` gives rust-analyzer everything it needs.
 - **Zig**: works as soon as `zls` is on your `PATH`.
-- **Python**: pyright picks up an active virtualenv automatically. Only add
-  a `pyrightconfig.json` in the project root if your venv lives somewhere
-  non-standard.
+- **Python**: in Zed, pylsp (completion via jedi, types via mypy) is pointed
+  at the project's `.venv` automatically. In Helix, start `hx` from an
+  activated venv (or `uv run hx`) so jedi resolves third-party imports, and to
+  let mypy see them too add a project-local `.helix/languages.toml`:
+
+  ```toml
+  [language-server.pylsp.config.pylsp.plugins.pylsp_mypy]
+  overrides = ["--python-executable", ".venv/bin/python", true]
+  ```
 - **C / C++**: this is the one exception — clangd needs a
   `compile_commands.json` per project to know your include paths and flags.
   `bear` is installed for exactly this: run `bear -- make`, or with CMake add
@@ -124,8 +130,8 @@ settings in `zed/settings.json` are symlinked to `~/.config/zed/settings.json`
   0.5 s after you stop typing and on focus loss, so there is no "unsaved"
   state to think about. Formatting (rustfmt/ruff) only runs on an explicit
   Cmd-S so autosave never rewrites what you are typing.
-- rust-analyzer runs **clippy** on check; Python uses **pyright + ruff**, the
-  same servers install.sh puts on PATH.
+- rust-analyzer runs **clippy** on check; Python uses **pylsp + ruff**, the
+  same split as Helix (Zed downloads its own pylsp, Helix uses the pipx one).
 - Inline git blame on the current line.
 - Extensions auto-installed on first launch: zig, toml, kdl, just,
   dockerfile, make, sql, env, log, csv.

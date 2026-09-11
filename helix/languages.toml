@@ -1,23 +1,58 @@
 # -----------------------------------------------------------------
-# Python — pyright (types) + ruff (lint & format)
+# Python — pylsp (jedi + mypy + rope) + ruff (lint & format)
+# Same split as zed/settings.json. install.sh puts `pylsp` (with
+# pylsp-mypy and rope) and `ruff` on PATH via pipx.
 # -----------------------------------------------------------------
 [[language]]
 name = "python"
-language-servers = ["pyright", "ruff"]
+language-servers = ["pylsp", "ruff"]
 auto-format = true
 formatter = { command = "ruff", args = ["format", "-"] }
 
-[language-server.pyright]
-command = "pyright-langserver"
-args = ["--stdio"]
+[language-server.pylsp]
+command = "pylsp"
 
-[language-server.pyright.config.python.analysis]
-typeCheckingMode = "basic"
-autoImportCompletions = true
+# Linters/formatters superseded by `ruff server` below.
+[language-server.pylsp.config.pylsp.plugins]
+autopep8 = { enabled = false }
+black = { enabled = false }
+flake8 = { enabled = false }
+isort = { enabled = false }
+mccabe = { enabled = false }
+pycodestyle = { enabled = false }
+pydocstyle = { enabled = false }
+pyflakes = { enabled = false }
+pylint = { enabled = false }
+yapf = { enabled = false }
+ruff = { enabled = false }
+# jedi_* (completion, hover, goto, references) are on by default. jedi follows
+# $VIRTUAL_ENV, so start hx from an activated venv (or `uv run hx`) to resolve
+# third-party imports. rope_autoimport adds "import X" code actions;
+# rope_completion stays off because it duplicates jedi's list.
+rope_autoimport = { enabled = true, completions = { enabled = false }, code_actions = { enabled = true } }
 
+# Type checking via mypy. mypy runs with pylsp's own interpreter, so to see a
+# project's packages point it at the venv from a project-local
+# .helix/languages.toml:
+#   [language-server.pylsp.config.pylsp.plugins.pylsp_mypy]
+#   overrides = ["--python-executable", ".venv/bin/python", true]
+# live_mode re-runs mypy on every change; on big projects switch to
+# dmypy = true, live_mode = false.
+[language-server.pylsp.config.pylsp.plugins.pylsp_mypy]
+enabled = true
+live_mode = true
+report_progress = true
+
+# `ruff server`: lint + format + import sorting; a project's pyproject.toml /
+# ruff.toml wins over these settings.
 [language-server.ruff]
 command = "ruff"
 args = ["server"]
+
+[language-server.ruff.config.settings]
+lineLength = 100
+lint = { extendSelect = ["I"] }
+codeAction = { disableRuleComment = { enable = false } }
 
 # -----------------------------------------------------------------
 # Rust — rust-analyzer, clippy-on-save, lldb-dap for debugging

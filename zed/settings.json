@@ -105,13 +105,80 @@
       "initialization_options": {
         "check": { "command": "clippy" }
       }
+    },
+    // Zed downloads pylsp into its own venv (python-lsp-server[all] +
+    // pylsp-mypy + rope), so nothing extra is needed from install.sh. Zed also
+    // points jedi and mypy at the project's .venv it detects, so third-party
+    // imports resolve without further config.
+    "pylsp": {
+      "settings": {
+        "plugins": {
+          // Linters/formatters superseded by `ruff server` below.
+          "autopep8": { "enabled": false },
+          "black": { "enabled": false },
+          "flake8": { "enabled": false },
+          "isort": { "enabled": false },
+          "mccabe": { "enabled": false },
+          "pycodestyle": { "enabled": false },
+          "pydocstyle": { "enabled": false },
+          "pyflakes": { "enabled": false },
+          "pylint": { "enabled": false },
+          "yapf": { "enabled": false },
+          // python-lsp-ruff, if ever installed: ruff runs as its own server.
+          "ruff": { "enabled": false },
+
+          // Type checking via mypy (pyright is disabled in "languages" below).
+          // live_mode re-runs mypy on every change; set "dmypy": true (and
+          // "live_mode": false) on large projects if it gets slow.
+          "pylsp_mypy": { "enabled": true, "live_mode": true, "report_progress": true },
+          // jedi_* (completion, hover, goto, references, symbols) are on by
+          // default. rope_autoimport adds "import X" quick fixes for unresolved
+          // names; rope_completion stays off because it duplicates jedi's list.
+          "rope_autoimport": {
+            "enabled": true,
+            "completions": { "enabled": false },
+            "code_actions": { "enabled": true }
+          }
+        }
+      }
+    },
+    // `ruff server`: lint + format + import sorting. A project's pyproject.toml /
+    // ruff.toml wins over everything here (configurationPreference default).
+    "ruff": {
+      "initialization_options": {
+        "settings": {
+          "configurationPreference": "filesystemFirst",
+          // Matches preferred_line_length / wrap_guides above.
+          "lineLength": 100,
+          // Default rule set (E4, E7, E9, F) plus isort-style import ordering.
+          "lint": { "enable": true, "extendSelect": ["I"] },
+          "fixAll": true,
+          "organizeImports": true,
+          "showSyntaxErrors": true,
+          "codeAction": {
+            // Hide the "Disable RULE for this line" quick fix; keep "Fix RULE".
+            "disableRuleComment": { "enable": false },
+            "fixViolation": { "enable": true }
+          }
+        }
+      }
     }
   },
   "languages": {
     "Python": {
-      // pyright + ruff are what install.sh puts on PATH (via pipx)
-      "language_servers": ["pyright", "ruff", "!basedpyright", "..."],
-      "formatter": { "language_server": { "name": "ruff" } }
+      // pylsp (jedi + mypy + rope) for IDE features, ruff for lint/format.
+      // "!" disables Zed's default type checkers so diagnostics aren't doubled.
+      "language_servers": ["pylsp", "ruff", "!basedpyright", "!pyright", "!ty", "..."],
+      // On Cmd-S: apply ruff's safe fixes and sort imports, then format.
+      "formatter": [
+        {
+          "code_actions": {
+            "source.organizeImports.ruff": true,
+            "source.fixAll.ruff": true
+          }
+        },
+        { "language_server": { "name": "ruff" } }
+      ]
     }
   },
 
