@@ -9,6 +9,11 @@ opacity = 1.0
 startup_mode = "Maximized"
 title = "Alacritty"
 
+[env]
+# macOS Alacritty only sets LC_CTYPE=UTF-8; bash 5.3 then warns
+# "setlocale: LC_COLLATE: cannot change locale ()". Give it a full locale.
+LANG = "en_US.UTF-8"
+
 [scrolling]
 history = 10000
 multiplier = 3
