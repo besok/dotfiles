@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------
 # Python — pylsp (jedi + mypy + rope) + ruff (lint & format)
-# Same split as zed/settings.json. install.sh puts `pylsp` (with
+# Zed uses basedpyright instead (zed/settings.json). install.sh puts `pylsp` (with
 # pylsp-mypy and rope) and `ruff` on PATH via pipx.
 # -----------------------------------------------------------------
 [[language]]

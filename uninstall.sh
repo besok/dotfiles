@@ -51,11 +51,15 @@ rm_link "$CONFIG_HOME/zellij/layouts/rsdev.kdl"
 rm_link "$CONFIG_HOME/zellij/layouts/pydev.kdl"
 rm_link "$CONFIG_HOME/starship.toml"
 rm_link "$CONFIG_HOME/zed/settings.json"
+rm_link "$CONFIG_HOME/zed/tasks.json"
+rm_link "$CONFIG_HOME/zed/debug.json"
+rm_link "$CONFIG_HOME/zed/keymap.json"
 rm_link "$CONFIG_HOME/yazi/yazi.toml"
 rm_link "$CONFIG_HOME/lazygit/config.yml"
 rm_link "$LOCAL_BIN/mdp"
 rm_link "$LOCAL_BIN/llm"
 rm_link "$LOCAL_BIN/doctor"
+rm_link "$LOCAL_BIN/prun"
 
 # ~/.local/bin/zed: install.sh links the Zed.app CLI here on macOS when the
 # app was installed outside Homebrew. Only remove it if it's that link.
@@ -138,6 +142,7 @@ for rc in "${rcs[@]}"; do
     strip_range "$rc" '# y(): launch yazi'
     strip_range "$rc" '# rt(): fuzzy-pick'
     strip_range "$rc" '# ptk(): fuzzy-pick'
+    strip_range "$rc" '# pyproj: Poetry/uv project tooling'
     strip_range "$rc" '# pm(): run a Python'
 done
 

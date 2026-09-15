@@ -105,10 +105,10 @@ needle "dev alias"             '^alias dev='
 needle "rsdev alias"           '^alias rsdev='
 needle "pydev alias"           '^alias pydev='
 needle "cargo aliases"         '^alias cb='
-needle "uv aliases"            '^alias pvenv='
+needle "ruff aliases"          '^alias pf='
 needle "y() yazi wrapper"      '^# y\(\): launch yazi'
 needle "rt() test picker"      '^# rt\(\): fuzzy-pick'
-needle "ptk() test picker"     '^# ptk\(\): fuzzy-pick'
+needle "pyproj functions (pt, ptk)" '^# pyproj: Poetry/uv project tooling'
 needle "pm() entrypoint"       '^# pm\(\): run a Python'
 
 section "fonts"

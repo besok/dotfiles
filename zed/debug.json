@@ -1,0 +1,52 @@
+// Zed user debug configurations — symlinked to ~/.config/zed/debug.json.
+// PyCharm "Debug" configurations. Shift-F9 / Ctrl-D (see zed/keymap.json)
+// opens the picker; the gutter icon next to a test or `__main__` block also
+// offers Debug. Zed downloads the Debugpy adapter on first use and runs it
+// with the interpreter of the .venv it detected (toolchain in the status bar),
+// so the project's packages are importable without any `python` field here.
+// https://zed.dev/docs/debugger
+[
+  {
+    "label": "python: debug $ZED_FILENAME",
+    "adapter": "Debugpy",
+    "request": "launch",
+    "program": "$ZED_FILE",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    // Step into library code too (PyCharm default is to skip it: set true).
+    "justMyCode": false
+  },
+  {
+    "label": "python: debug module $ZED_STEM",
+    "adapter": "Debugpy",
+    "request": "launch",
+    "module": "$ZED_STEM",
+    "cwd": "$ZED_DIRNAME",
+    "justMyCode": false
+  },
+  {
+    "label": "pytest: debug $ZED_FILENAME",
+    "adapter": "Debugpy",
+    "request": "launch",
+    "module": "pytest",
+    "args": ["-q", "$ZED_FILE"],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "justMyCode": false
+  },
+  {
+    "label": "pytest: debug $ZED_SYMBOL in $ZED_FILENAME",
+    "adapter": "Debugpy",
+    "request": "launch",
+    "module": "pytest",
+    "args": ["-q", "$ZED_FILE", "-k", "$ZED_SYMBOL"],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "justMyCode": false
+  },
+  {
+    // For a process started elsewhere with
+    //   uv run python -m debugpy --listen 5678 --wait-for-client script.py
+    "label": "python: attach to localhost:5678",
+    "adapter": "Debugpy",
+    "request": "attach",
+    "connect": { "host": "127.0.0.1", "port": 5678 }
+  }
+]

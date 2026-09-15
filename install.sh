@@ -201,7 +201,7 @@ if ! command -v lldb-dap >/dev/null 2>&1; then
 fi
 
 # -------------------------------------------------------------------
-# 5. Python: interpreter + pylsp (jedi/mypy/rope) + ruff
+# 5. Python: interpreter + pylsp (jedi/mypy/rope, Helix) + ruff
 # -------------------------------------------------------------------
 echo "==> Setting up Python tooling..."
 case "$PKG" in
@@ -210,7 +210,8 @@ case "$PKG" in
     pacman) install_pkgs python python-pipx ;;
 esac
 pipx ensurepath || true
-# pylsp for Helix; Zed downloads its own copy. [rope] adds the rope_autoimport
+# pylsp for Helix only; Zed uses basedpyright, which it downloads itself (and
+# the Debugpy adapter on first debug). [rope] adds the rope_autoimport
 # plugin, pylsp-mypy brings in mypy for type checking. python-lsp-server has
 # no wheels for the newest CPython right after a release; fall back to 3.13.
 pipx install "python-lsp-server[rope]" --force \
@@ -227,7 +228,7 @@ if ! command -v uv >/dev/null 2>&1; then
 fi
 
 # pytest + pytest-watcher (ptw): test runner and watch-mode for `pt`/`pw`/
-# `ptk`. pytest-watcher replaces the abandoned pytest-watch (same `ptw`
+# `ptk` (via prun: poetry run / uv run). pytest-watcher replaces the abandoned pytest-watch (same `ptw`
 # command, but the watch path is a required argument: `ptw .`).
 # Installed globally as a fallback; prefer adding them as project
 # dev-deps via `uv add --dev pytest` for per-project environments.
@@ -535,16 +536,20 @@ ln -sf "$DOTFILES_DIR/zellij/layouts/rsdev.kdl" "$CONFIG_HOME/zellij/layouts/rsd
 ln -sf "$DOTFILES_DIR/zellij/layouts/pydev.kdl" "$CONFIG_HOME/zellij/layouts/pydev.kdl"
 ln -sf "$DOTFILES_DIR/starship/starship.toml"   "$CONFIG_HOME/starship.toml"
 
-# zed: user settings (theme, JetBrains keymap, autosave, LSP tweaks)
+# zed: user settings (theme, JetBrains keymap, autosave, LSP tweaks), plus
+# PyCharm-style run/debug configurations and the extra keybindings they use.
 mkdir -p "$CONFIG_HOME/zed"
-if [[ -f "$CONFIG_HOME/zed/settings.json" && ! -L "$CONFIG_HOME/zed/settings.json" ]]; then
-    mv "$CONFIG_HOME/zed/settings.json" "$CONFIG_HOME/zed/settings.json.bak"
-    echo "   Backed up existing zed settings to $CONFIG_HOME/zed/settings.json.bak"
-fi
-ln -sf "$DOTFILES_DIR/zed/settings.json"          "$CONFIG_HOME/zed/settings.json"
+for zf in settings.json tasks.json debug.json keymap.json; do
+    if [[ -f "$CONFIG_HOME/zed/$zf" && ! -L "$CONFIG_HOME/zed/$zf" ]]; then
+        mv "$CONFIG_HOME/zed/$zf" "$CONFIG_HOME/zed/$zf.bak"
+        echo "   Backed up existing zed $zf to $CONFIG_HOME/zed/$zf.bak"
+    fi
+    ln -sf "$DOTFILES_DIR/zed/$zf" "$CONFIG_HOME/zed/$zf"
+done
 ln -sf "$DOTFILES_DIR/scripts/mdp.sh"           "$LOCAL_BIN/mdp"
 ln -sf "$DOTFILES_DIR/scripts/llm.sh"           "$LOCAL_BIN/llm"
 ln -sf "$DOTFILES_DIR/scripts/doctor.sh"        "$LOCAL_BIN/doctor"
+ln -sf "$DOTFILES_DIR/scripts/prun.sh"          "$LOCAL_BIN/prun"
 
 # yazi: route Enter on text/code files to Helix instead of yazi's default
 # opener (block=true hands the terminal fully to hx instead of trying to
@@ -619,30 +624,98 @@ for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
 done
 
 # -------------------------------------------------------------------
-# Python / uv aliases — the cargo-equivalent workflow
+# Python project tooling — the cargo-equivalent workflow, Poetry or uv
 # -------------------------------------------------------------------
-# pvenv - create a .venv virtualenv in the current project (uv venv)
-# pd    - sync/install the project's dependencies + env (uv sync)
-# pa    - add a dependency (uv add <pkg>), mirrors `cargo add`
-# prm   - remove a dependency (uv remove <pkg>), mirrors `cargo rm`
-# pu    - upgrade locked dependencies within constraints (uv lock --upgrade)
+# One set of short names; `prun --tool` (scripts/prun.sh) decides per project
+# whether they mean Poetry (poetry.lock or [tool.poetry] in pyproject.toml)
+# or uv (everything else).
+# pvenv - create the project env (poetry env use <py> | uv venv)
+# pd    - install/sync the project's deps + env (poetry install | uv sync)
+# pa    - add a dependency (poetry add | uv add), mirrors `cargo add`
+# prm   - remove a dependency (poetry remove | uv remove), mirrors `cargo rm`
+# pu    - upgrade locked dependencies (poetry update | uv lock --upgrade)
+# prun  - run any command in the project env (poetry run | uv run)
 # pf    - format code (ruff format)
 # pl    - lint (ruff check)
 # pcx   - lint with auto-fixes applied (ruff check --fix)
-# pt    - run the full test suite (uv run pytest)
-# pw    - run tests on every save (uv run ptw ., via pytest-watcher)
+# pt    - run pytest, whole suite or the args you pass (prun pytest)
+# pw    - run tests on every save (prun ptw ., via pytest-watcher)
+# ptk   - fuzzy-pick one or more tests with fzf and run them (see below)
 for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
-    add_alias "$rc" "alias pvenv='uv venv'"
-    add_alias "$rc" "alias pd='uv sync'"
-    add_alias "$rc" "alias pa='uv add'"
-    add_alias "$rc" "alias prm='uv remove'"
-    add_alias "$rc" "alias pu='uv lock --upgrade'"
+    # Drop the uv-only aliases older versions of this script wrote; they are
+    # functions now (an alias with the same name would break their parsing).
+    if [[ -f "$rc" ]]; then
+        sed -i.bak -e "/^alias pvenv='uv venv'$/d" -e "/^alias pd='uv sync'$/d" \
+            -e "/^alias pa='uv add'$/d" -e "/^alias prm='uv remove'$/d" \
+            -e "/^alias pu='uv lock --upgrade'$/d" -e "/^alias pt='uv run pytest'$/d" \
+            -e "/^alias pw='uv run ptw .'$/d" "$rc"
+    fi
     add_alias "$rc" "alias pf='ruff format .'"
     add_alias "$rc" "alias pl='ruff check .'"
     add_alias "$rc" "alias pcx='ruff check --fix .'"
-    add_alias "$rc" "alias pt='uv run pytest'"
-    add_alias "$rc" "alias pw='uv run ptw .'"
 done
+
+# pyproj block: the pvenv/pd/pa/prm/pu/pt/pw functions plus ptk(), the fzf
+# test picker. ptk lists the tests pytest collects (`file::Class::test`
+# node ids, parametrized ids included), lets you fuzzy-pick one or several
+# (Tab to multi-select), and runs exactly those. Any argument pre-fills the
+# fzf query, e.g. `ptk login`. If collection fails (import error, missing
+# pytest), pytest's own output is shown instead of an empty picker.
+add_pyproj_function() {
+    local rc_file="$1"
+    local marker="# pyproj: Poetry/uv project tooling"
+    if [[ -f "$rc_file" ]]; then
+        if grep -Fq "$marker" "$rc_file"; then
+            sed -i.bak '/^# pyproj: Poetry\/uv project tooling/,/^}$/d' "$rc_file"
+        fi
+        # Older standalone ptk() from this script (uv-only): superseded.
+        if grep -Fq "# ptk(): fuzzy-pick and run a single pytest test (uv run pytest + fzf)" "$rc_file"; then
+            sed -i.bak '/^# ptk(): fuzzy-pick and run a single pytest test (uv run pytest + fzf)/,/^}$/d' "$rc_file"
+        fi
+        if has_func "$rc_file" "ptk" || has_func "$rc_file" "pt"; then
+            echo "   skip pyproj block — $rc_file already defines its own pt()/ptk()"
+            return 0
+        fi
+        echo "==> Adding Poetry/uv project functions (pd, pt, ptk, ...) to $rc_file"
+        cat >> "$rc_file" <<'EOF'
+
+# pyproj: Poetry/uv project tooling (pvenv pd pa prm pu pt pw ptk) — dotfiles
+unalias pvenv pd pa prm pu prun pt pw ptk 2>/dev/null
+_pyt()  { command prun --tool 2>/dev/null || echo uv; }
+pvenv() { if [[ $(_pyt) == poetry ]]; then poetry env use "${1:-python3}"; else uv venv "$@"; fi; }
+pd()    { if [[ $(_pyt) == poetry ]]; then poetry install "$@"; else uv sync "$@"; fi; }
+pa()    { if [[ $(_pyt) == poetry ]]; then poetry add "$@"; else uv add "$@"; fi; }
+prm()   { if [[ $(_pyt) == poetry ]]; then poetry remove "$@"; else uv remove "$@"; fi; }
+pu()    { if [[ $(_pyt) == poetry ]]; then poetry update "$@"; else uv lock --upgrade "$@"; fi; }
+# pt: pytest in the project env. Adds --dis-vis when the repo's conftest
+# defines that option (otherwise graphviz/matplotlib windows block the run).
+pt()    { grep -qs 'dis-vis' tests/conftest.py && set -- --dis-vis "$@"; prun pytest "$@"; }
+pw()    { prun ptw . "$@"; }
+# ptk [query]: fuzzy-pick test(s) with fzf (Tab = multi-select) and run them.
+# Collects and runs from the project root, so it sees the whole suite from
+# any subdirectory and the picked node ids resolve.
+ptk() {
+    local root out ids line tests=()
+    root=$(command prun --root 2>/dev/null) || root=$PWD
+    out=$(cd "$root" && prun pytest --collect-only -q 2>&1)
+    ids=$(printf '%s\n' "$out" | grep '::')
+    if [[ -z "$ids" ]]; then
+        printf '%s\n' "$out" >&2
+        echo "ptk: pytest collected no tests under $root" >&2
+        return 1
+    fi
+    ids=$(printf '%s\n' "$ids" | fzf --multi --height 40% --reverse \
+        --prompt 'pytest> ' --query "$*") || return
+    [[ -n "$ids" ]] || return
+    while IFS= read -r line; do tests+=("$line"); done <<< "$ids"
+    (cd "$root" && pt "${tests[@]}")
+}
+EOF
+    fi
+}
+
+add_pyproj_function "$HOME/.bashrc"
+add_pyproj_function "$HOME/.zshrc"
 
 # y(): launch yazi, and if you cd'd somewhere inside it, land your shell
 # there on quit (the standard wrapper recommended by yazi's own docs —
@@ -713,36 +786,6 @@ EOF
 
 add_function "$HOME/.bashrc"
 add_function "$HOME/.zshrc"
-
-# ptk(): fuzzy-pick a single pytest test and run it (uv run pytest + fzf).
-# Any argument pre-fills the fzf search query, e.g. `ptk my_test`.
-add_ptk_function() {
-    local rc_file="$1"
-    local marker="# ptk(): fuzzy-pick and run a single test"
-    if [[ -f "$rc_file" ]]; then
-        if grep -Fq "$marker" "$rc_file"; then
-            sed -i.bak '/^# ptk(): fuzzy-pick/,/^}$/d' "$rc_file"
-        elif has_func "$rc_file" "ptk"; then
-            echo "   skip ptk() — $rc_file already defines its own ptk()"
-            return 0
-        fi
-        echo "==> Adding ptk() test-picker function to $rc_file"
-        cat >> "$rc_file" <<'EOF'
-
-# ptk(): fuzzy-pick and run a single pytest test (uv run pytest + fzf)
-ptk() {
-    local test
-    test=$(uv run pytest --collect-only -q 2>/dev/null \
-        | grep '::' \
-        | fzf --height 40% --query "$*") || return
-    uv run pytest "$test"
-}
-EOF
-    fi
-}
-
-add_ptk_function "$HOME/.bashrc"
-add_ptk_function "$HOME/.zshrc"
 
 # pm(): run a Python entrypoint with the project's .venv interpreter.
 # No args -> runs ./main.py if present. Otherwise pass the script (or

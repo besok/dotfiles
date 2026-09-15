@@ -98,57 +98,56 @@
     "**/node_modules"
   ],
 
-  // ---- LSP / language tooling (mirrors helix/languages.toml) ------------
-  "inlay_hints": { "enabled": true },
+  // ---- LSP / language tooling ---------------------------------------------
+  // Python here differs from helix/languages.toml on purpose: Helix keeps
+  // pylsp, Zed runs basedpyright so it behaves like PyCharm (see below).
+  "inlay_hints": {
+    "enabled": true,
+    "show_type_hints": true,
+    "show_parameter_hints": true,
+    "show_other_hints": true
+  },
   "lsp": {
     "rust-analyzer": {
       "initialization_options": {
         "check": { "command": "clippy" }
       }
     },
-    // Zed downloads pylsp into its own venv (python-lsp-server[all] +
-    // pylsp-mypy + rope), so nothing extra is needed from install.sh. Zed also
-    // points jedi and mypy at the project's .venv it detects, so third-party
-    // imports resolve without further config.
-    "pylsp": {
+    // basedpyright = the PyCharm-like engine: it is Zed's default Python
+    // server (downloaded by Zed itself, no install.sh step) and covers what
+    // PyCharm's own indexer gives you: go to definition/declaration/type
+    // definition, find usages, rename, auto-import completions, inlay hints,
+    // call/type hierarchy and type checking. Zed hands it the interpreter of
+    // the .venv it detects in the project (toolchain picker in the status
+    // bar), so third-party imports resolve like with a configured PyCharm SDK.
+    // Anything set in a project's pyproject.toml [tool.basedpyright] or
+    // pyrightconfig.json overrides these defaults.
+    "basedpyright": {
       "settings": {
-        // NOTE: rope cannot be told to skip <project>/.ropeproject/ from here.
-        // pylsp's settings merge (pylsp/_utils.py merge_dicts) drops every key
-        // whose value is null, so `"rope": { "ropeFolder": null }` never reaches
-        // rope and it falls back to its default folder. The only way to keep
-        // the folder out of the repo is to not load rope at all; see
-        // rope_autoimport below.
-        "plugins": {
-          // Linters/formatters superseded by `ruff server` below.
-          "autopep8": { "enabled": false },
-          "black": { "enabled": false },
-          "flake8": { "enabled": false },
-          "isort": { "enabled": false },
-          "mccabe": { "enabled": false },
-          "pycodestyle": { "enabled": false },
-          "pydocstyle": { "enabled": false },
-          "pyflakes": { "enabled": false },
-          "pylint": { "enabled": false },
-          "yapf": { "enabled": false },
-          // python-lsp-ruff, if ever installed: ruff runs as its own server.
-          "ruff": { "enabled": false },
-
-          // Type checking via mypy (pyright is disabled in "languages" below).
-          // live_mode re-runs mypy on every change; set "dmypy": true (and
-          // "live_mode": false) on large projects if it gets slow.
-          "pylsp_mypy": { "enabled": true, "live_mode": true, "report_progress": true },
-          // jedi_* (completion, hover, goto, references, symbols) are on by
-          // default. rope_autoimport would add "import X" quick fixes for
-          // unresolved names, but it is the plugin that builds a rope Project,
-          // and that always creates <project>/.ropeproject/ (plus a ~10 MB
-          // autoimport.db unless "memory": true). Disabled so no folder shows
-          // up in repos. To get the quick fixes back, set "enabled": true and
-          // keep "memory": true, then add .ropeproject to the global gitignore.
-          "rope_autoimport": {
-            "enabled": false,
-            "memory": true,
-            "completions": { "enabled": false },
-            "code_actions": { "enabled": true }
+        // Import sorting is ruff's job (see formatter below).
+        "basedpyright": {
+          "disableOrganizeImports": true,
+          "analysis": {
+            // "standard" ~ PyCharm's default inspection level. basedpyright's
+            // own default "recommended" flags far more (reportAny, unused call
+            // results, ...); "strict" is mypy --strict territory.
+            "typeCheckingMode": "standard",
+            // Only open files are analysed, like PyCharm's editor inspections.
+            // "workspace" also fills the Diagnostics panel for the whole
+            // project (Cmd-6 style) at the cost of an up-front full analysis.
+            "diagnosticMode": "openFilesOnly",
+            // PyCharm-style completion: offer symbols not yet imported and add
+            // the import statement on accept.
+            "autoImportCompletions": true,
+            "autoSearchPaths": true,
+            "useLibraryCodeForTypes": true,
+            // Inline hints the way PyCharm renders them.
+            "inlayHints": {
+              "variableTypes": true,
+              "functionReturnTypes": true,
+              "callArgumentNames": true,
+              "genericTypes": false
+            }
           }
         }
       }
@@ -177,9 +176,11 @@
   },
   "languages": {
     "Python": {
-      // pylsp (jedi + mypy + rope) for IDE features, ruff for lint/format.
-      // "!" disables Zed's default type checkers so diagnostics aren't doubled.
-      "language_servers": ["pylsp", "ruff", "!basedpyright", "!pyright", "!ty", "..."],
+      // basedpyright for navigation/completion/types, ruff for lint/format.
+      // "!" keeps the other Python servers off so diagnostics aren't doubled
+      // (pylsp is what this file used before; ty/pyrefly/pyright are the
+      // remaining built-in alternatives).
+      "language_servers": ["basedpyright", "ruff", "!pylsp", "!pyright", "!ty", "!pyrefly", "..."],
       // On Cmd-S: apply ruff's safe fixes and sort imports, then format.
       "formatter": [
         {
@@ -189,8 +190,24 @@
           }
         },
         { "language_server": { "name": "ruff" } }
-      ]
+      ],
+      // Gutter run/debug icons on `def test_*`, test classes and
+      // `if __name__ == "__main__":`, like PyCharm's green triangles.
+      "tasks": { "enabled": true }
     }
+  },
+
+  // ---- Running & debugging (PyCharm run configurations) ------------------
+  // Shift-F10 (task::Spawn) lists Zed's built-in Python tasks plus the ones in
+  // zed/tasks.json (run file with uv, pytest for file / whole suite / symbol
+  // under cursor, ruff). Shift-F9 (debugger::Start) does the same for
+  // zed/debug.json; the Debugpy adapter is downloaded by Zed on first use.
+  // zed/keymap.json adds the macOS PyCharm keys (Ctrl-R run, Ctrl-D debug).
+  "debugger": {
+    "dock": "bottom",
+    "stepping_granularity": "line",
+    // Breakpoints survive restarts, as in PyCharm.
+    "save_breakpoints": true
   },
 
   // ---- Git: inline blame on the current line (like `space B` in Helix) --
@@ -207,7 +224,15 @@
   "agent": { "dock": "right" },
   "terminal": {
     "font_family": "JetBrainsMono Nerd Font",
-    "font_size": 14
+    "font_size": 14,
+    // New terminals start with the project's venv activated, so `python`,
+    // `pytest` and `ruff` there are the same ones basedpyright/tasks use.
+    "detect_venv": {
+      "on": {
+        "directories": [".venv", "venv", ".env", "env"],
+        "activate_script": "default"
+      }
+    }
   },
 
   // ---- Extensions: installed automatically on first launch --------------

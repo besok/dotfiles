@@ -1,0 +1,43 @@
+// Zed user keymap — symlinked to ~/.config/zed/keymap.json by install.sh.
+// Layered on top of base_keymap "JetBrains" (settings.json), which already
+// binds Shift-F10 run, Shift-F9 debug, Alt-T rerun, F7/F8 step, Cmd-B goto
+// definition, Alt-F7 find usages, Shift-F6 rename, Cmd-Shift-A actions.
+// These add the macOS PyCharm keys that keymap lacks.
+[
+  {
+    "context": "Workspace",
+    "bindings": {
+      // PyCharm macOS: Ctrl-R = Run, Ctrl-D = Debug (last configuration),
+      // Ctrl-Alt-R / Ctrl-Alt-D = choose a configuration.
+      "ctrl-r": "task::Rerun",
+      "ctrl-alt-r": "task::Spawn",
+      "ctrl-d": "debugger::RerunSession",
+      "ctrl-alt-d": "debugger::Start",
+      "cmd-f2": "debugger::Stop"
+    }
+  },
+  {
+    // In the integrated terminal Ctrl-R stays reverse-search and Ctrl-D EOF.
+    "context": "Terminal",
+    "bindings": {
+      "ctrl-r": ["terminal::SendKeystroke", "ctrl-r"],
+      "ctrl-d": ["terminal::SendKeystroke", "ctrl-d"]
+    }
+  },
+  {
+    "context": "Editor",
+    "bindings": {
+      // PyCharm: Cmd-B / Cmd-click definition, Cmd-Shift-B type declaration,
+      // Cmd-U super method, Cmd-F12 file structure, Cmd-O class by name.
+      "cmd-shift-b": "editor::GoToTypeDefinition",
+      "cmd-u": "editor::GoToDeclaration",
+      "cmd-f12": "outline::Toggle",
+      "cmd-o": "project_symbols::Toggle",
+      "ctrl-h": "editor::GoToImplementation",
+      // Ctrl-Space completion, Cmd-P parameter info, F1 quick documentation.
+      "ctrl-space": "editor::ShowCompletions",
+      "cmd-p": "editor::ShowSignatureHelp",
+      "f1": "editor::Hover"
+    }
+  }
+]

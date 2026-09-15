@@ -71,8 +71,9 @@ Mostly no — the global config handles the LSPs/formatters automatically:
 
 - **Rust**: nothing extra. `cargo new` gives rust-analyzer everything it needs.
 - **Zig**: works as soon as `zls` is on your `PATH`.
-- **Python**: in Zed, pylsp (completion via jedi, types via mypy) is pointed
-  at the project's `.venv` automatically. In Helix, start `hx` from an
+- **Python**: in Zed, basedpyright and the Debugpy debugger use the `.venv`
+  Zed detects in the project automatically (toolchain picker in the status
+  bar if there are several). In Helix, start `hx` from an
   activated venv (or `uv run hx`) so jedi resolves third-party imports, and to
   let mypy see them too add a project-local `.helix/languages.toml`:
 
@@ -136,8 +137,22 @@ settings in `zed/settings.json` are symlinked to `~/.config/zed/settings.json`
   0.5 s after you stop typing and on focus loss, so there is no "unsaved"
   state to think about. Formatting (rustfmt/ruff) only runs on an explicit
   Cmd-S so autosave never rewrites what you are typing.
-- rust-analyzer runs **clippy** on check; Python uses **pylsp + ruff**, the
-  same split as Helix (Zed downloads its own pylsp, Helix uses the pipx one).
+- rust-analyzer runs **clippy** on check. Python is set up to feel like
+  **PyCharm**: **basedpyright** (Zed downloads it) for go-to-definition,
+  find usages, rename, auto-import completions, inlay type hints and type
+  checking at PyCharm's "standard" strictness, plus **ruff** for lint,
+  import sorting and formatting. Helix keeps pylsp instead.
+- **Run / debug like PyCharm**: `zed/tasks.json` holds run configurations
+  (run file or module with `uv run`, pytest for the file, the whole suite or
+  the test under the cursor, ruff), `zed/debug.json` the matching Debugpy
+  launch/attach configurations (adapter downloaded by Zed on first use), and
+  tests / `__main__` blocks get gutter run icons. `zed/keymap.json` adds the
+  macOS PyCharm keys on top of the JetBrains keymap: Ctrl-R run last,
+  Ctrl-Alt-R pick a run config, Ctrl-D debug last, Ctrl-Alt-D pick a debug
+  config, Cmd-Shift-B type definition, Cmd-U declaration, Cmd-F12 file
+  structure, Cmd-O symbol, Cmd-P parameter info, F1 quick docs. Shift-F10 /
+  Shift-F9 / Alt-T from the JetBrains keymap keep working.
+- New integrated terminals start with the project's `.venv` activated.
 - Inline git blame on the current line.
 - Extensions auto-installed on first launch: zig, toml, kdl, just,
   dockerfile, make, sql, env, log, csv.
@@ -228,25 +243,32 @@ Rust / cargo aliases:
 | `cr`  | `cargo run` (build + run the project binary), mirrors `pm` |
 | `rt`  | Fuzzy-pick and run a single Rust test (cargo-nextest + fzf) |
 
-Python / uv aliases (the cargo-equivalent workflow, powered by [uv](https://docs.astral.sh/uv/)):
+Python aliases (the cargo-equivalent workflow). They work in **Poetry** and
+**uv** projects alike: `prun` (`scripts/prun.sh`, on `PATH`) looks for
+`poetry.lock` / `[tool.poetry]` upward from the current directory and runs
+`poetry run`, otherwise `uv run`; the functions below dispatch the same way.
 
 | Command | What it does |
 |---------|--------------|
-| `pvenv` | Create a `.venv` in the current project (`uv venv`) |
-| `pd`    | Sync/install the project's deps + env (`uv sync`) |
-| `pa`    | Add a dependency (`uv add <pkg>`) |
-| `prm`   | Remove a dependency (`uv remove <pkg>`) |
-| `pu`    | Upgrade locked deps within constraints (`uv lock --upgrade`) |
+| `pvenv` | Create the project env (`poetry env use python3` / `uv venv`) |
+| `pd`    | Install/sync the project's deps + env (`poetry install` / `uv sync`) |
+| `pa`    | Add a dependency (`poetry add` / `uv add <pkg>`) |
+| `prm`   | Remove a dependency (`poetry remove` / `uv remove <pkg>`) |
+| `pu`    | Upgrade locked deps (`poetry update` / `uv lock --upgrade`) |
+| `prun`  | Run any command in the project env (`poetry run` / `uv run`) |
 | `pf`    | Format code (`ruff format .`) |
 | `pl`    | Lint (`ruff check .`) |
 | `pcx`   | Lint with auto-fixes (`ruff check --fix .`) |
-| `pt`    | Run the full test suite (`uv run pytest`) |
-| `pw`    | Run tests on every save (`uv run ptw .`, via pytest-watcher) |
-| `ptk`   | Fuzzy-pick and run a single pytest test (uv + fzf) |
+| `pt`    | Run pytest: whole suite, or whatever args you pass (`prun pytest`) |
+| `pw`    | Run tests on every save (`prun ptw .`, via pytest-watcher) |
+| `ptk`   | Fuzzy-pick test(s) with fzf and run them (`ptk login` pre-fills the query, Tab multi-selects) |
 | `pm`    | Run a Python entrypoint via `.venv/bin/python` (defaults to `main.py`) |
 
-To use `pt`/`pw`/`ptk`, add `pytest` as a project dev-dependency once:
-`uv add --dev pytest` (add `pytest-watcher` too for `pw`).
+`ptk` lists what `pytest --collect-only` finds (`tests/test_x.py::TestA::test_b`,
+parametrized ids included) and runs exactly the picked node ids, so it needs
+`pytest` in the project's dev-dependencies: `poetry add --group dev pytest` or
+`uv add --dev pytest` (add `pytest-watcher` too for `pw`). The Zed run
+configurations in `zed/tasks.json` go through the same `prun`.
 
 ## Git diffs, merges & conflict resolution
 

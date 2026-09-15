@@ -24,7 +24,7 @@ layout {
     }
 
     // Tab 3: ops — four consoles, all manual, no auto-watch.
-    // Top-left: single test, e.g. `ptk` (fzf-pick + uv run pytest).
+    // Top-left: single test, e.g. `ptk` (fzf-pick + poetry/uv run pytest).
     // Top-right: run, e.g. `pm` (project entrypoint).
     // Bottom-left: full test suite (uv run pytest).
     // Bottom-right: lint (ruff check).

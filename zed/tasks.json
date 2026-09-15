@@ -1,0 +1,65 @@
+// Zed user tasks — symlinked to ~/.config/zed/tasks.json by install.sh.
+// PyCharm "run configurations" for Python. Shift-F10 / Ctrl-R (see
+// zed/keymap.json) opens the picker with these plus Zed's built-in Python
+// tasks; the last one used is re-run with Ctrl-Alt-R / Alt-T.
+//
+// Everything goes through `prun` (scripts/prun.sh, on PATH via install.sh):
+// `poetry run` in Poetry projects, `uv run` otherwise, so the project's own
+// env is used without activating anything and pytest comes from the
+// project's dev-deps, not from pipx. Variables:
+// https://zed.dev/docs/tasks#variables
+[
+  {
+    "label": "python: run $ZED_FILENAME",
+    "command": "prun",
+    "args": ["python", "$ZED_FILE"],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "reveal": "always",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "tags": ["python-script", "python-main"]
+  },
+  {
+    "label": "python: run module $ZED_STEM",
+    "command": "prun",
+    "args": ["python", "-m", "$ZED_STEM"],
+    "cwd": "$ZED_DIRNAME",
+    "reveal": "always"
+  },
+  {
+    "label": "pytest: $ZED_FILENAME",
+    "command": "prun",
+    "args": ["pytest", "-q", "$ZED_FILE"],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "reveal": "always"
+  },
+  {
+    // PyCharm's "Run 'test_x'" on the function/class under the cursor.
+    "label": "pytest: $ZED_SYMBOL in $ZED_FILENAME",
+    "command": "prun",
+    "args": ["pytest", "-q", "$ZED_FILE", "-k", "$ZED_SYMBOL"],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "reveal": "always"
+  },
+  {
+    "label": "pytest: whole suite",
+    "command": "prun",
+    "args": ["pytest", "-q"],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "reveal": "always"
+  },
+  {
+    "label": "ruff: check project",
+    "command": "ruff",
+    "args": ["check", "."],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "reveal": "always"
+  },
+  {
+    "label": "ruff: fix + format project",
+    "command": "sh",
+    "args": ["-c", "ruff check --fix . && ruff format ."],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "reveal": "always"
+  }
+]
