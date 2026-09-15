@@ -112,10 +112,12 @@
     // imports resolve without further config.
     "pylsp": {
       "settings": {
-        // rope (used by rope_autoimport) normally writes <project>/.ropeproject/
-        // with a ~10 MB autoimport.db. null = no folder in the repo; the index
-        // is kept in memory instead and rebuilt when pylsp starts.
-        "rope": { "ropeFolder": null },
+        // NOTE: rope cannot be told to skip <project>/.ropeproject/ from here.
+        // pylsp's settings merge (pylsp/_utils.py merge_dicts) drops every key
+        // whose value is null, so `"rope": { "ropeFolder": null }` never reaches
+        // rope and it falls back to its default folder. The only way to keep
+        // the folder out of the repo is to not load rope at all; see
+        // rope_autoimport below.
         "plugins": {
           // Linters/formatters superseded by `ruff server` below.
           "autopep8": { "enabled": false },
@@ -136,10 +138,15 @@
           // "live_mode": false) on large projects if it gets slow.
           "pylsp_mypy": { "enabled": true, "live_mode": true, "report_progress": true },
           // jedi_* (completion, hover, goto, references, symbols) are on by
-          // default. rope_autoimport adds "import X" quick fixes for unresolved
-          // names; rope_completion stays off because it duplicates jedi's list.
+          // default. rope_autoimport would add "import X" quick fixes for
+          // unresolved names, but it is the plugin that builds a rope Project,
+          // and that always creates <project>/.ropeproject/ (plus a ~10 MB
+          // autoimport.db unless "memory": true). Disabled so no folder shows
+          // up in repos. To get the quick fixes back, set "enabled": true and
+          // keep "memory": true, then add .ropeproject to the global gitignore.
           "rope_autoimport": {
-            "enabled": true,
+            "enabled": false,
+            "memory": true,
             "completions": { "enabled": false },
             "code_actions": { "enabled": true }
           }
