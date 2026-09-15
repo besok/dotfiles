@@ -262,6 +262,7 @@ Python aliases (the cargo-equivalent workflow). They work in **Poetry** and
 | `pt`    | Run pytest: whole suite, or whatever args you pass (`prun pytest`) |
 | `pw`    | Run tests on every save (`prun ptw .`, via pytest-watcher) |
 | `ptk`   | Fuzzy-pick test(s) with fzf and run them (`ptk login` pre-fills the query, Tab multi-selects) |
+| `ptf`   | Run all tests in one file by name (`ptf login` → `tests/test_login.py`; ambiguous or no name opens an fzf file picker) |
 | `pm`    | Run a Python entrypoint via `.venv/bin/python` (defaults to `main.py`) |
 
 `ptk` lists what `pytest --collect-only` finds (`tests/test_x.py::TestA::test_b`,

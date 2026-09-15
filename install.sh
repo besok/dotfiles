@@ -641,6 +641,7 @@ done
 # pt    - run pytest, whole suite or the args you pass (prun pytest)
 # pw    - run tests on every save (prun ptw ., via pytest-watcher)
 # ptk   - fuzzy-pick one or more tests with fzf and run them (see below)
+# ptf   - run all tests in one file, picked by file name (see below)
 for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
     # Drop the uv-only aliases older versions of this script wrote; they are
     # functions now (an alias with the same name would break their parsing).
@@ -656,31 +657,39 @@ for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
 done
 
 # pyproj block: the pvenv/pd/pa/prm/pu/pt/pw functions plus ptk(), the fzf
-# test picker. ptk lists the tests pytest collects (`file::Class::test`
-# node ids, parametrized ids included), lets you fuzzy-pick one or several
-# (Tab to multi-select), and runs exactly those. Any argument pre-fills the
-# fzf query, e.g. `ptk login`. If collection fails (import error, missing
-# pytest), pytest's own output is shown instead of an empty picker.
+# test picker, and ptf(), the per-file runner. ptk lists the tests pytest
+# collects (`file::Class::test` node ids, parametrized ids included), lets
+# you fuzzy-pick one or several (Tab to multi-select), and runs exactly
+# those. Any argument pre-fills the fzf query, e.g. `ptk login`. ptf does the
+# same over test files: `ptf login` runs all of tests/test_login.py. If
+# collection fails (import error, missing pytest), pytest's own output is
+# shown instead of an empty picker.
 add_pyproj_function() {
     local rc_file="$1"
     local marker="# pyproj: Poetry/uv project tooling"
     if [[ -f "$rc_file" ]]; then
         if grep -Fq "$marker" "$rc_file"; then
-            sed -i.bak '/^# pyproj: Poetry\/uv project tooling/,/^}$/d' "$rc_file"
+            # Current layout ends with an explicit end marker; older installs
+            # (ptk() as the last function) end at the first bare `}`.
+            if grep -Fxq "# pyproj: end" "$rc_file"; then
+                sed -i.bak '/^# pyproj: Poetry\/uv project tooling/,/^# pyproj: end$/d' "$rc_file"
+            else
+                sed -i.bak '/^# pyproj: Poetry\/uv project tooling/,/^}$/d' "$rc_file"
+            fi
         fi
         # Older standalone ptk() from this script (uv-only): superseded.
         if grep -Fq "# ptk(): fuzzy-pick and run a single pytest test (uv run pytest + fzf)" "$rc_file"; then
             sed -i.bak '/^# ptk(): fuzzy-pick and run a single pytest test (uv run pytest + fzf)/,/^}$/d' "$rc_file"
         fi
-        if has_func "$rc_file" "ptk" || has_func "$rc_file" "pt"; then
-            echo "   skip pyproj block — $rc_file already defines its own pt()/ptk()"
+        if has_func "$rc_file" "ptk" || has_func "$rc_file" "ptf" || has_func "$rc_file" "pt"; then
+            echo "   skip pyproj block — $rc_file already defines its own pt()/ptk()/ptf()"
             return 0
         fi
-        echo "==> Adding Poetry/uv project functions (pd, pt, ptk, ...) to $rc_file"
+        echo "==> Adding Poetry/uv project functions (pd, pt, ptk, ptf, ...) to $rc_file"
         cat >> "$rc_file" <<'EOF'
 
-# pyproj: Poetry/uv project tooling (pvenv pd pa prm pu pt pw ptk) — dotfiles
-unalias pvenv pd pa prm pu prun pt pw ptk 2>/dev/null
+# pyproj: Poetry/uv project tooling (pvenv pd pa prm pu pt pw ptk ptf) — dotfiles
+unalias pvenv pd pa prm pu prun pt pw ptk ptf 2>/dev/null
 _pyt()  { command prun --tool 2>/dev/null || echo uv; }
 pvenv() { if [[ $(_pyt) == poetry ]]; then poetry env use "${1:-python3}"; else uv venv "$@"; fi; }
 pd()    { if [[ $(_pyt) == poetry ]]; then poetry install "$@"; else uv sync "$@"; fi; }
@@ -710,6 +719,35 @@ ptk() {
     while IFS= read -r line; do tests+=("$line"); done <<< "$ids"
     (cd "$root" && pt "${tests[@]}")
 }
+# ptf [name]: run every test in one test file, picked by file name.
+# `ptf login` runs tests/test_login.py straight away when exactly one
+# collected file matches; several matches (or no argument) open an fzf
+# picker over the test files (Tab = multi-select). Paths to existing files
+# are passed through as-is, so `ptf tests/test_x.py` also works.
+ptf() {
+    local root out files picked line tests=()
+    if [[ $# -gt 0 && -f "$1" ]]; then pt "$@"; return; fi
+    root=$(command prun --root 2>/dev/null) || root=$PWD
+    out=$(cd "$root" && prun pytest --collect-only -q 2>&1)
+    files=$(printf '%s\n' "$out" | grep '::' | cut -d: -f1 | sort -u)
+    if [[ -z "$files" ]]; then
+        printf '%s\n' "$out" >&2
+        echo "ptf: pytest collected no tests under $root" >&2
+        return 1
+    fi
+    if [[ $# -gt 0 ]]; then
+        picked=$(printf '%s\n' "$files" | grep -F -- "$1")
+        [[ $(printf '%s\n' "$picked" | grep -c .) -eq 1 ]] || picked=""
+    fi
+    if [[ -z "$picked" ]]; then
+        picked=$(printf '%s\n' "$files" | fzf --multi --height 40% --reverse \
+            --prompt 'test file> ' --query "$*") || return
+    fi
+    [[ -n "$picked" ]] || return
+    while IFS= read -r line; do tests+=("$line"); done <<< "$picked"
+    (cd "$root" && pt "${tests[@]}")
+}
+# pyproj: end
 EOF
     fi
 }

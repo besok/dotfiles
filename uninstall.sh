@@ -142,7 +142,14 @@ for rc in "${rcs[@]}"; do
     strip_range "$rc" '# y(): launch yazi'
     strip_range "$rc" '# rt(): fuzzy-pick'
     strip_range "$rc" '# ptk(): fuzzy-pick'
-    strip_range "$rc" '# pyproj: Poetry/uv project tooling'
+    # pyproj block: newer installs close it with `# pyproj: end`; older ones
+    # (ptk() last) end at the first bare `}`, which strip_range handles.
+    if grep -Fxq "# pyproj: end" "$rc" 2>/dev/null; then
+        sed_i '/^# pyproj: Poetry\/uv project tooling/,/^# pyproj: end$/d' "$rc"
+        echo "   stripped # pyproj: Poetry/uv project tooling ... from $rc"
+    else
+        strip_range "$rc" '# pyproj: Poetry/uv project tooling'
+    fi
     strip_range "$rc" '# pm(): run a Python'
 done
 
