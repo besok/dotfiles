@@ -261,15 +261,21 @@ Python aliases (the cargo-equivalent workflow). They work in **Poetry** and
 | `pcx`   | Lint with auto-fixes (`ruff check --fix .`) |
 | `pt`    | Run pytest: whole suite, or whatever args you pass (`prun pytest`) |
 | `pw`    | Run tests on every save (`prun ptw .`, via pytest-watcher) |
-| `ptk`   | Fuzzy-pick test(s) with fzf and run them (`ptk login` pre-fills the query, Tab multi-selects) |
+| `ptk`   | Fuzzy-pick test(s) with fzf and run them (`ptk login` pre-fills the query, Tab multi-selects, `ptk -c` lists parametrized ids) |
 | `ptf`   | Run all tests in one file by name (`ptf login` → `tests/test_login.py`; ambiguous or no name opens an fzf file picker) |
 | `pm`    | Run a Python entrypoint via `.venv/bin/python` (defaults to `main.py`) |
 
-`ptk` lists what `pytest --collect-only` finds (`tests/test_x.py::TestA::test_b`,
-parametrized ids included) and runs exactly the picked node ids, so it needs
-`pytest` in the project's dev-dependencies: `poetry add --group dev pytest` or
-`uv add --dev pytest` (add `pytest-watcher` too for `pw`). The Zed run
-configurations in `zed/tasks.json` go through the same `prun`.
+`ptk` lists test node ids (`tests/test_x.py::TestA::test_b`) from a static scan
+of the `test_*.py` / `*_test.py` files, which takes ~0.2s where
+`pytest --collect-only` takes 10-30s on a big suite (it imports every test
+module and conftest). The scan does not expand names generated at runtime:
+`ptk -c` switches to real pytest collection when you want to pick a single
+parametrized case, and if a picked id turns out not to exist (e.g.
+`parameterized` renames the method) ptk re-runs the picks as
+`pytest file -k name`. Running the tests needs `pytest` in the project's
+dev-dependencies: `poetry add --group dev pytest` or `uv add --dev pytest`
+(add `pytest-watcher` too for `pw`). The Zed run configurations in
+`zed/tasks.json` go through the same `prun`.
 
 ## Git diffs, merges & conflict resolution
 

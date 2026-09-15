@@ -669,13 +669,15 @@ for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
 done
 
 # pyproj block: the pvenv/pd/pa/prm/pu/pt/pw functions plus ptk(), the fzf
-# test picker, and ptf(), the per-file runner. ptk lists the tests pytest
-# collects (`file::Class::test` node ids, parametrized ids included), lets
-# you fuzzy-pick one or several (Tab to multi-select), and runs exactly
-# those. Any argument pre-fills the fzf query, e.g. `ptk login`. ptf does the
-# same over test files: `ptf login` runs all of tests/test_login.py. If
-# collection fails (import error, missing pytest), pytest's own output is
-# shown instead of an empty picker.
+# test picker, and ptf(), the per-file runner. ptk lists the tests as
+# `file::Class::test` node ids from a static scan of the test files (instant;
+# `ptk -c` uses `pytest --collect-only` instead, slow but with parametrized
+# ids), lets you fuzzy-pick one or several (Tab to multi-select), and runs
+# exactly those. Any argument pre-fills the fzf query, e.g. `ptk login`. ptf
+# does the same over test files: `ptf login` runs all of tests/test_login.py.
+# If the scan finds nothing, pytest collection is used; if that fails too
+# (import error, missing pytest), pytest's own output is shown instead of an
+# empty picker.
 add_pyproj_function() {
     local rc_file="$1"
     local marker="# pyproj: Poetry/uv project tooling"
@@ -712,40 +714,94 @@ pu()    { if [[ $(_pyt) == poetry ]]; then poetry update "$@"; else uv lock --up
 # defines that option (otherwise graphviz/matplotlib windows block the run).
 pt()    { grep -qs 'dis-vis' tests/conftest.py && set -- --dis-vis "$@"; prun pytest "$@"; }
 pw()    { prun ptw . "$@"; }
-# ptk [query]: fuzzy-pick test(s) with fzf (Tab = multi-select) and run them.
-# Collects and runs from the project root, so it sees the whole suite from
-# any subdirectory and the picked node ids resolve.
-ptk() {
-    local root out ids line tests=()
-    root=$(command prun --root 2>/dev/null) || root=$PWD
-    out=$(cd "$root" && prun pytest --collect-only -q 2>&1)
+# _pyt_files ROOT: test files (pytest's default test_*.py / *_test.py),
+# relative to ROOT, skipping hidden dirs (.venv, .git, caches), venv,
+# node_modules, build and dist. NUL-separated.
+_pyt_files() {
+    ( cd "$1" && find . \( -name '.?*' -o -name venv -o -name node_modules \
+        -o -name __pycache__ -o -name build -o -name dist \) -prune \
+        -o -type f \( -name 'test_*.py' -o -name '*_test.py' \) -print0 )
+}
+# _pyt_scan ROOT: list test node ids without importing anything — a static
+# scan of the test files, ~0.2s where `pytest --collect-only` takes 10-30s
+# (it imports every test module and conftest). Emits `file::test_x` for
+# top-level tests, `file::Class::test_x` for methods of test classes (name
+# contains "Test" or a TestCase base), and `file::Class` for test classes
+# that only inherit their tests. Names generated at runtime (parametrize
+# ids, `parameterized`) are not expanded; ptk copes with that, see below.
+_pyt_scan() {
+    ( cd "$1" && _pyt_files . | xargs -0 -r awk '
+        function flush() { if (cls != "" && cnt == 0) print pf "::" cls; cls = ""; cnt = 0 }
+        { f = FILENAME; sub(/^\.\//, "", f) }
+        FNR == 1 { flush() }
+        /^class[ \t]+[A-Za-z_]/ {
+            flush(); c = $2; sub(/[(:].*/, "", c)
+            if (c ~ /Test/ || $0 ~ /TestCase/) { cls = c; pf = f }
+            next
+        }
+        /^[A-Za-z_]/ { flush() }
+        /^[ \t]*(async[ \t]+)?def[ \t]+test_/ {
+            if ($0 ~ /^[ \t]/) { if (cls == "") next; cnt++ }
+            n = $0; sub(/^[ \t]*(async[ \t]+)?def[ \t]+/, "", n); sub(/[ \t(].*/, "", n)
+            print f "::" (cls == "" ? "" : cls "::") n
+        }
+        END { flush() }' ) | sort
+}
+# _pyt_collect ROOT: the exact node ids from `pytest --collect-only` (slow,
+# but includes parametrized ids). Prints pytest's output on failure.
+_pyt_collect() {
+    local out ids
+    out=$(cd "$1" && prun pytest --collect-only -q 2>&1)
     ids=$(printf '%s\n' "$out" | grep '::')
     if [[ -z "$ids" ]]; then
         printf '%s\n' "$out" >&2
-        echo "ptk: pytest collected no tests under $root" >&2
+        echo "pytest collected no tests under $1" >&2
         return 1
+    fi
+    printf '%s\n' "$ids"
+}
+# ptk [-c] [query]: fuzzy-pick test(s) with fzf (Tab = multi-select) and run
+# them. Lists tests via the static scan (instant); `-c` uses pytest's own
+# collection instead (slow, but shows parametrized ids so you can pick one
+# case). Runs from the project root so it sees the whole suite from any
+# subdirectory. If pytest reports a picked id as not found (exit 4: the
+# name only exists at runtime, e.g. `parameterized`), the picks are re-run
+# as `file -k name`, which matches the generated names.
+ptk() {
+    local root ids line rc collect=0 tests=() files=() expr=""
+    if [[ ${1:-} == -c ]]; then collect=1; shift; fi
+    root=$(command prun --root 2>/dev/null) || root=$PWD
+    if (( collect )); then
+        ids=$(_pyt_collect "$root") || return 1
+    else
+        ids=$(_pyt_scan "$root")
+        [[ -n "$ids" ]] || ids=$(_pyt_collect "$root") || return 1
     fi
     ids=$(printf '%s\n' "$ids" | fzf --multi --height 40% --reverse \
         --prompt 'pytest> ' --query "$*") || return
     [[ -n "$ids" ]] || return
     while IFS= read -r line; do tests+=("$line"); done <<< "$ids"
-    (cd "$root" && pt "${tests[@]}")
+    (cd "$root" && pt "${tests[@]}"); rc=$?
+    (( rc == 4 && !collect )) || return $rc
+    for line in "${tests[@]}"; do
+        files+=("${line%%::*}"); expr+="${expr:+ or }${line##*::}"
+    done
+    echo "ptk: node id not found — re-running as -k '$expr'" >&2
+    (cd "$root" && pt "${files[@]}" -k "$expr")
 }
 # ptf [name]: run every test in one test file, picked by file name.
 # `ptf login` runs tests/test_login.py straight away when exactly one
-# collected file matches; several matches (or no argument) open an fzf
+# test file matches; several matches (or no argument) open an fzf
 # picker over the test files (Tab = multi-select). Paths to existing files
 # are passed through as-is, so `ptf tests/test_x.py` also works.
 ptf() {
-    local root out files picked line tests=()
+    local root files picked line tests=()
     if [[ $# -gt 0 && -f "$1" ]]; then pt "$@"; return; fi
     root=$(command prun --root 2>/dev/null) || root=$PWD
-    out=$(cd "$root" && prun pytest --collect-only -q 2>&1)
-    files=$(printf '%s\n' "$out" | grep '::' | cut -d: -f1 | sort -u)
+    files=$(_pyt_files "$root" | tr '\0' '\n' | sed 's|^\./||' | sort)
     if [[ -z "$files" ]]; then
-        printf '%s\n' "$out" >&2
-        echo "ptf: pytest collected no tests under $root" >&2
-        return 1
+        files=$(_pyt_collect "$root" | cut -d: -f1 | sort -u)
+        [[ -n "$files" ]] || return 1
     fi
     if [[ $# -gt 0 ]]; then
         picked=$(printf '%s\n' "$files" | grep -F -- "$1")
