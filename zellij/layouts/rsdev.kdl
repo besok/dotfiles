@@ -24,19 +24,20 @@ layout {
     }
 
     // Tab 3: ops — four consoles, all manual, no auto-watch.
-    // Top-left: single test, e.g. `rt` (fzf-pick + cargo nextest run).
-    // Top-right: run, e.g. `cr` (cargo run).
-    // Bottom-left: full test suite (cargo nextest run / cargo test).
-    // Bottom-right: clippy (cargo clippy).
+    // Left column (test output) gets 70% width, right column 30%.
+    // 1 (top-left): single test, e.g. `rt` (fzf-pick + cargo nextest run).
+    // 2 (top-right): run, e.g. `cr` (cargo run).
+    // 3 (bottom-left): full test suite (cargo nextest run / cargo test).
+    // 4 (bottom-right): clippy (cargo clippy).
     tab name="ops" {
         pane split_direction="horizontal" {
             pane split_direction="vertical" {
-                pane name="single-test"
-                pane name="run"
+                pane name="1" size="70%"
+                pane name="2" size="30%"
             }
             pane split_direction="vertical" {
-                pane name="all-tests"
-                pane name="clippy"
+                pane name="3" size="70%"
+                pane name="4" size="30%"
             }
         }
     }

@@ -460,6 +460,18 @@ if [[ "$OS" == "Darwin" ]]; then
     fi
 fi
 
+# macOS only exports LC_CTYPE=UTF-8 to terminals. bash 5.x then warns
+# "setlocale: LC_COLLATE: cannot change locale ()" on every prompt, and any
+# long-lived process started from that shell (the Zellij server) inherits the
+# broken env. Export a full locale from the login shell; alacritty.toml [env]
+# and zellij config.kdl env {} cover the terminals they spawn themselves.
+LOCALE_LINE='[ -z "$LANG" ] && export LANG="en_US.UTF-8"  # dotfiles: full locale, silences bash setlocale warning'
+if [[ "$OS" == "Darwin" ]]; then
+    add_line "$HOME/.bash_profile" "$LOCALE_LINE"
+else
+    add_line "$HOME/.bashrc" "$LOCALE_LINE"
+fi
+
 add_line() {
     local rc_file="$1" line="$2"
     if [[ -f "$rc_file" ]] && ! grep -Fq "$line" "$rc_file"; then
