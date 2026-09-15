@@ -62,9 +62,12 @@ ensure_rust() {
 echo "==> Installing helix, alacritty, zellij..."
 case "$PKG" in
     brew)   # bash: macOS ships a frozen bash 3.2 at /bin/bash; install a
-            # current bash 5.x (used as the Alacritty shell)
-            install_pkgs bash helix alacritty zellij ;;
-    apt)    install_pkgs alacritty
+            # current bash 5.x (used as the Alacritty shell).
+            # bash-completion@2: programmable completion for bash 4.2+ (make
+            # targets, ssh hosts, git subcommands...). Without it bash only
+            # completes filenames. Sourced from ~/.bashrc in step 9.
+            install_pkgs bash bash-completion@2 helix alacritty zellij ;;
+    apt)    install_pkgs alacritty bash-completion
             # Prefer snap for Helix — the maveonair PPA has lagged noticeably
             # behind upstream releases (confirmed: PPA stuck at 24.7 while
             # snap ships 25.07+). Snap also makes future updates a one-liner.
@@ -103,7 +106,7 @@ case "$PKG" in
                     echo "   or grab a release from https://github.com/zellij-org/zellij/releases"
                 }
             fi ;;
-    pacman) install_pkgs helix alacritty zellij ;;
+    pacman) install_pkgs bash-completion helix alacritty zellij ;;
 esac
 
 # -------------------------------------------------------------------
@@ -462,6 +465,16 @@ add_line() {
         echo "$line" >> "$rc_file"
     fi
 }
+
+# bash-completion: make targets, ssh hosts, git subcommands, etc. Loaded
+# first so tools that wrap existing completions (fzf --bash wraps ssh's)
+# find the real one. The file lazy-loads per-command completions, so it is
+# cheap at startup. Homebrew path on macOS; distro path on Linux.
+BASH_COMPLETION_LINE='[[ -r "/opt/homebrew/etc/profile.d/bash_completion.sh" ]] && . "/opt/homebrew/etc/profile.d/bash_completion.sh"  # dotfiles: bash-completion (make/ssh/git tab completion)'
+if [[ "$OS" != "Darwin" ]]; then
+    BASH_COMPLETION_LINE='[[ -r /usr/share/bash-completion/bash_completion ]] && . /usr/share/bash-completion/bash_completion  # dotfiles: bash-completion (make/ssh/git tab completion)'
+fi
+add_line "$HOME/.bashrc" "$BASH_COMPLETION_LINE"
 
 if command -v starship >/dev/null 2>&1; then
     add_line "$HOME/.bashrc" 'eval "$(starship init bash)"'

@@ -116,6 +116,8 @@ for rc in "${rcs[@]}"; do
     strip_line "$rc" 'case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) export PATH="$HOME/.local/bin:$PATH" ;; esac  # dotfiles: ~/.local/bin (zed, uv, pipx, mdp/llm/doctor)'
     strip_line "$rc" 'export EDITOR="hx"'
     strip_line "$rc" 'export VISUAL="hx"'
+    strip_line "$rc" '[[ -r "/opt/homebrew/etc/profile.d/bash_completion.sh" ]] && . "/opt/homebrew/etc/profile.d/bash_completion.sh"  # dotfiles: bash-completion (make/ssh/git tab completion)'
+    strip_line "$rc" '[[ -r /usr/share/bash-completion/bash_completion ]] && . /usr/share/bash-completion/bash_completion  # dotfiles: bash-completion (make/ssh/git tab completion)'
     strip_line "$rc" 'eval "$(starship init bash)"'
     strip_line "$rc" 'eval "$(starship init zsh)"'
     strip_line "$rc" 'eval "$(zoxide init bash)"'

@@ -98,6 +98,7 @@ needle() {
 }
 needle "~/.local/bin on PATH"  'dotfiles: ~/.local/bin'
 needle "EDITOR=hx"             'export EDITOR="hx"'
+needle "bash-completion sourced" 'dotfiles: bash-completion'
 needle "starship init"         'starship init'
 needle "zoxide init"           'zoxide init'
 needle "dev alias"             '^alias dev='

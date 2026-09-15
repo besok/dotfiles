@@ -104,6 +104,12 @@ each language's toolchain/LSP, `lldb-dap`, `cargo-watch`, `glow`, `entr`,
 everything into `~/.config/`, puts `~/.local/bin` on your `PATH` and drops
 the `mdp`/`llm`/`doctor` scripts there.
 
+It also installs **bash-completion** (`bash-completion@2` on Homebrew,
+`bash-completion` on apt/pacman) and sources it from `~/.bashrc`. Without
+it bash only tab-completes filenames; with it you get `make`/`gmake`
+targets, `ssh` hosts (from `~/.ssh/config` and `known_hosts`), `git`
+subcommands and branches, and so on.
+
 Notes on packages it can't get from apt directly:
 - **Helix** on Ubuntu — not in the default repos, so the script prefers the
   official snap (current releases), falling back to the maveonair PPA
