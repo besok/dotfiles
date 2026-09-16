@@ -259,7 +259,7 @@ Python aliases (the cargo-equivalent workflow). They work in **Poetry** and
 | `pf`    | Format code (`ruff format .`) |
 | `pl`    | Lint (`ruff check .`) |
 | `pcx`   | Lint with auto-fixes (`ruff check --fix .`) |
-| `pt`    | Run pytest: whole suite, or whatever args you pass (`prun pytest`) |
+| `pt`    | Run pytest: whole suite, or whatever args you pass (`prun pytest`). Drawings show by default; `export PT_DIS_VIS=1` adds `--dis-vis` in repos whose conftest defines it |
 | `pw`    | Run tests on every save (`prun ptw .`, via pytest-watcher) |
 | `ptk`   | Fuzzy-pick test(s) with fzf and run them (`ptk login` pre-fills the query, Tab multi-selects, `ptk -c` lists parametrized ids) |
 | `ptf`   | Run all tests in one file by name (`ptf login` → `tests/test_login.py`; ambiguous or no name opens an fzf file picker) |

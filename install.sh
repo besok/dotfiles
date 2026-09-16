@@ -710,9 +710,10 @@ pd()    { if [[ $(_pyt) == poetry ]]; then poetry install "$@"; else uv sync "$@
 pa()    { if [[ $(_pyt) == poetry ]]; then poetry add "$@"; else uv add "$@"; fi; }
 prm()   { if [[ $(_pyt) == poetry ]]; then poetry remove "$@"; else uv remove "$@"; fi; }
 pu()    { if [[ $(_pyt) == poetry ]]; then poetry update "$@"; else uv lock --upgrade "$@"; fi; }
-# pt: pytest in the project env. Adds --dis-vis when the repo's conftest
-# defines that option (otherwise graphviz/matplotlib windows block the run).
-pt()    { grep -qs 'dis-vis' tests/conftest.py && set -- --dis-vis "$@"; prun pytest "$@"; }
+# pt: pytest in the project env. Drawings (graphviz/matplotlib windows) show
+# by default; export PT_DIS_VIS=1 (e.g. in your rc file) to pass --dis-vis
+# when the repo's conftest defines that option, so windows don't block the run.
+pt()    { [[ ${PT_DIS_VIS:-} == 1 ]] && grep -qs 'dis-vis' tests/conftest.py && set -- --dis-vis "$@"; prun pytest "$@"; }
 pw()    { prun ptw . "$@"; }
 # _pyt_files ROOT: test files (pytest's default test_*.py / *_test.py),
 # relative to ROOT, skipping hidden dirs (.venv, .git, caches), venv,
