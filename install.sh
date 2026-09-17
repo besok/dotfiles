@@ -591,7 +591,11 @@ has_func() {
     grep -Eq "^[[:space:]]*(function[[:space:]]+)?${name}[[:space:]]*\(\)" "$rc_file" 2>/dev/null
 }
 
-# Add zellij layout aliases to rc files
+# Add zellij layout aliases to rc files.
+# Each layout gets a named session (dev/rsdev/pydev): the alias reattaches if
+# the session is already running and only creates it (with the layout) when it
+# isn't, so closing the terminal never leaks a fresh randomly-named server.
+# kill_devs force-deletes all three so you can clean up at the end of the day.
 add_alias() {
     local rc_file="$1" alias_cmd="$2" name
     name="${alias_cmd#alias }"; name="${name%%=*}"
@@ -606,9 +610,10 @@ add_alias() {
 }
 
 for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
-    add_alias "$rc" "alias dev='zellij --layout dev'"
-    add_alias "$rc" "alias rsdev='zellij --layout rsdev'"
-    add_alias "$rc" "alias pydev='zellij --layout pydev'"
+    add_alias "$rc" "alias dev='zellij attach --create dev options --default-layout dev'"
+    add_alias "$rc" "alias rsdev='zellij attach --create rsdev options --default-layout rsdev'"
+    add_alias "$rc" "alias pydev='zellij attach --create pydev options --default-layout pydev'"
+    add_alias "$rc" "alias kill_devs='for s in dev rsdev pydev; do zellij delete-session --force \"\$s\" 2>/dev/null; done; zellij delete-all-sessions --yes 2>/dev/null'"
 done
 
 # -------------------------------------------------------------------

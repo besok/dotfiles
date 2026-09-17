@@ -195,10 +195,17 @@ cd ~/some-project
 dev
 ```
 
-`dev` is an alias (`zellij --layout dev`) added to your shell rc by
-`install.sh`. It opens a Zellij session with the `dev` layout and attaches
-to the running session if one already exists, so your panes, running
-builds, and the `llms` tab pick up right where you left off.
+`dev` is an alias (`zellij attach --create dev options --default-layout dev`)
+added to your shell rc by `install.sh`. It attaches to a session named `dev`
+if one is already running, and only creates it (with the `dev` layout) when
+it isn't — so your panes, running builds, and the `llms` tab pick up right
+where you left off, and closing the terminal never leaks a fresh
+randomly-named session. Note that the layout is applied only on creation and
+the session is shared across directories: run `kill_devs` first if you want a
+clean `dev` session in a different project.
+
+`kill_devs` force-deletes the `dev`, `rsdev` and `pydev` sessions and then
+sweeps any exited sessions, so `zellij list-sessions` stays short.
 
 If you'd rather launch straight from your desktop instead of an existing
 terminal, open Alacritty (maximized, light Catppuccin Latte colors) and
