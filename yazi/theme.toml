@@ -1,0 +1,60 @@
+# Colours. Base palette comes from the Catppuccin flavors installed via
+# `ya pkg` (package.toml); yazi picks light/dark by asking the terminal
+# for its background colour. Alacritty here is Latte (light), so the
+# light flavor is what you normally see.
+#
+# Accent overrides below turn the default blue into Latte mauve (purple).
+# For green instead, replace #8839ef with #40a02b (Latte green).
+# Reference keys: https://github.com/sxyazi/yazi/blob/shipped/yazi-config/preset/theme-light.toml
+
+[flavor]
+light = "catppuccin-latte"
+dark  = "catppuccin-mocha"
+
+[mgr]
+cwd             = { fg = "#8839ef", bold = true }
+border_style    = { fg = "#8839ef" }
+marker_selected = { fg = "#8839ef", bg = "#8839ef" }
+count_selected  = { fg = "#eff1f5", bg = "#8839ef" }
+find_position   = { fg = "#8839ef", bg = "reset", bold = true, italic = true }
+
+[tabs]
+active   = { fg = "#eff1f5", bg = "#8839ef", bold = true }
+inactive = { fg = "#8839ef", bg = "#ccd0da" }
+
+[mode]
+normal_main = { fg = "#eff1f5", bg = "#8839ef", bold = true }
+normal_alt  = { fg = "#8839ef", bg = "#ccd0da" }
+
+[status]
+progress_normal = { fg = "#8839ef", bg = "#ccd0da" }
+
+[which]
+border = { fg = "#8839ef" }
+desc   = { fg = "#8839ef" }
+
+[confirm]
+border = { fg = "#8839ef" }
+title  = { fg = "#8839ef" }
+
+[spot]
+border  = { fg = "#8839ef" }
+title   = { fg = "#8839ef" }
+tbl_col = { fg = "#8839ef" }
+
+[pick]
+border = { fg = "#8839ef" }
+active = { fg = "#8839ef", bold = true }
+
+[input]
+border = { fg = "#8839ef" }
+
+[cmp]
+border = { fg = "#8839ef" }
+
+[tasks]
+border  = { fg = "#8839ef" }
+hovered = { fg = "#8839ef", bold = true }
+
+[help]
+border = { fg = "#8839ef" }

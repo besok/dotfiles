@@ -1,29 +1,45 @@
-# Routes Enter on text/code files to Helix instead of yazi's default
-# opener. Symlinked to ~/.config/yazi/yazi.toml by install.sh.
+# Yazi behaviour. The whole yazi/ directory is symlinked to ~/.config/yazi
+# by install.sh, so keymap.toml, theme.toml, init.lua and package.toml
+# next to this file are picked up too.
 #
-# block = true matters: it tells yazi to suspend itself and hand the
-# terminal fully to Helix, rather than trying to run it in the
-# background — without it, Helix opens in a broken, non-interactive
-# state.
-#
-# $EDITOR is also set to "hx" by install.sh, which covers yazi's
-# separate "open in editor" action (bound in yazi's own keymap.toml,
-# commonly ctrl-e) as well as git/crontab/etc. This file only controls
-# what happens when you press Enter on a file yazi doesn't already
-# treat as a text file.
+# Yazi ships complete defaults built in — only overrides live here.
+# Reference: https://github.com/sxyazi/yazi/blob/shipped/yazi-config/preset/yazi-default.toml
 
+[mgr]
+ratio          = [ 1, 3, 4 ]   # parent / current / preview column widths
+sort_by        = "natural"     # file2 < file10
+sort_dir_first = true
+linemode       = "size"        # size next to each name (m s / m m / m n to switch)
+show_hidden    = true
+
+# [opener] defines *how* to open (named commands); [open] defines *what*
+# opens with which opener (rules matched by mime type or path glob).
+#
+# Yazi 26 substitutes %s with the selected file paths (older versions used
+# "$@" — with that, hx starts with no argument and shows an empty buffer).
+# block = true suspends yazi and hands the terminal to Helix until it exits.
 [opener]
 edit = [
-	{ run = 'hx "$@"', desc = "Open with Helix", block = true },
+	{ run = 'hx %s', desc = "Helix", block = true, for = "unix" },
 ]
 
 [open]
 prepend_rules = [
-	# Broad net: catches most source/text files without needing a
-	# name pattern for every extension
-	{ mime = "text/*", use = "edit" },
-
+	# Markdown: Enter -> macOS default app (same as double-click in Finder);
+	# Shift-Enter / O lists all three so Helix is one keystroke away.
+	# `e` (keymap.toml) always edits in Helix regardless of type.
+	{ url = "*.md", use = [ "open", "edit", "reveal" ] },
 ]
+# Everything else keeps the built-in rules: text/* -> edit (Helix),
+# image/* -> open, archives -> extract, fallback -> macOS `open`.
 
-[mgr]
-show_hidden = true
+# git.yazi plugin: fetch git status so it can be shown in the linemode
+[[plugin.prepend_fetchers]]
+url   = "*"
+run   = "git"
+group = "git"
+
+[[plugin.prepend_fetchers]]
+url   = "*/"
+run   = "git"
+group = "git"

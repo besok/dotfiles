@@ -37,3 +37,7 @@ zig-out/
 # Local secret or non-versioned config overrides
 *.local
 .env
+
+# yazi plugins/flavors are fetched by `ya pkg install` from yazi/package.toml
+yazi/plugins/
+yazi/flavors/

@@ -40,6 +40,12 @@ dotfiles/
 │       └── pydev.kdl       # same as dev, no console tab; 4-console Python ops tab
 ├── lazygit/
 │   └── config.yml          # difftastic as the diff renderer
+├── yazi/                   # whole dir symlinked to ~/.config/yazi
+│   ├── yazi.toml           # columns ratio, sorting, openers (Helix / macOS default)
+│   ├── keymap.toml         # l = smart-enter, e = edit in Helix
+│   ├── theme.toml          # Catppuccin Latte flavor + purple accents
+│   ├── init.lua            # plugin setup (full-border, git, smart-enter)
+│   └── package.toml        # plugin/flavor lockfile for `ya pkg install`
 ├── screenshots/            # README images
 └── scripts/
     ├── llm.sh              # picks the LLM CLI per machine, installed as `llm`
@@ -283,6 +289,52 @@ parametrized case, and if a picked id turns out not to exist (e.g.
 dev-dependencies: `poetry add --group dev pytest` or `uv add --dev pytest`
 (add `pytest-watcher` too for `pw`). The Zed run configurations in
 `zed/tasks.json` go through the same `prun`.
+
+## Yazi (the `files` tab)
+
+[yazi](https://yazi-rs.github.io) is the terminal file manager in the
+`files` tab (and behind `y`). Its config is split across four files in
+`yazi/`, all symlinked as one directory to `~/.config/yazi`; only overrides
+of the [shipped defaults](https://github.com/sxyazi/yazi/tree/shipped/yazi-config/preset)
+live there.
+
+| Key | What it does |
+|-----|--------------|
+| `h` / `l` (or arrows) | Parent directory / enter directory **or open file** (smart-enter plugin) |
+| `Enter`, `o` | Open with the first matching opener: Helix for text/code, macOS default app for `.md`, images, PDFs… |
+| `Shift-Enter`, `O` | Pick the opener from a menu (e.g. Helix for a `.md`) |
+| `e` | Edit in Helix, whatever the file type |
+| `Space` / `v` | Select file / visual select |
+| `y` `x` `p` | Yank (copy) / cut / paste — `P` pastes overwriting |
+| `d` / `D` | Trash / delete permanently |
+| `a` / `r` | Create (end with `/` for a directory) / rename |
+| `.` | Toggle hidden files (on by default) |
+| `m s` `m m` `m n` | Linemode: size (default) / mtime / none |
+| `,` + key | Sort: `n` natural, `m` mtime, `s` size, `e` extension |
+| `z` / `Z` | Jump with zoxide / fzf |
+| `f` / `s` | Filter the list / search by name |
+| `~` | Full keybinding help |
+
+**Openers.** `[opener]` in `yazi.toml` names *how* to open (`edit` runs
+`hx %s`, blocking so Helix gets the terminal); `[open]` rules map *what*
+(mime type or path glob) to a list of openers — `Enter` uses the first,
+`O` shows them all. Yazi 26 substitutes `%s` for the selected paths; the old
+`"$@"` form is no longer expanded (Helix would open an empty buffer).
+
+**Theme.** Colours come from the Catppuccin flavors (Latte on a light
+terminal, Mocha if the terminal is dark — yazi asks the terminal for its
+background). `theme.toml` recolours the accents purple (`#8839ef`); for
+green replace that value with `#40a02b`.
+
+**Plugins.** Installed via `ya pkg`, pinned in `yazi/package.toml`, and
+restored by `install.sh` (`ya pkg install`); the fetched `plugins/` and
+`flavors/` directories are gitignored. Currently: `full-border`, `git`
+(status signs in the list), `smart-enter`. To add one, run
+`ya pkg add owner/repo:name`, register it in `init.lua` / `keymap.toml`,
+and commit the updated `package.toml`. Official ones worth a look:
+`toggle-pane`, `chmod`, `mount`, `jump-to-char`, `smart-filter`,
+`smart-paste`, `diff`, `mactag` (macOS Finder tags), `piper`
+(any shell command as a previewer) — see https://github.com/yazi-rs/plugins.
 
 ## Git diffs, merges & conflict resolution
 

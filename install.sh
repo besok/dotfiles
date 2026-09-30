@@ -563,12 +563,26 @@ ln -sf "$DOTFILES_DIR/scripts/llm.sh"           "$LOCAL_BIN/llm"
 ln -sf "$DOTFILES_DIR/scripts/doctor.sh"        "$LOCAL_BIN/doctor"
 ln -sf "$DOTFILES_DIR/scripts/prun.sh"          "$LOCAL_BIN/prun"
 
-# yazi: route Enter on text/code files to Helix instead of yazi's default
-# opener (block=true hands the terminal fully to hx instead of trying to
-# background it, which would otherwise leave Helix in a broken state)
+# yazi: symlink the whole config dir (yazi.toml, keymap.toml, theme.toml,
+# init.lua, package.toml), then fetch the plugins/flavors listed in
+# package.toml — those directories are gitignored, `ya pkg install`
+# recreates them. Older installs linked only yazi.toml into a real
+# ~/.config/yazi directory; that is migrated here.
 if command -v yazi >/dev/null 2>&1 || command -v ya >/dev/null 2>&1; then
-    mkdir -p "$CONFIG_HOME/yazi"
-    ln -sf "$DOTFILES_DIR/yazi/yazi.toml" "$CONFIG_HOME/yazi/yazi.toml"
+    if [[ -d "$CONFIG_HOME/yazi" && ! -L "$CONFIG_HOME/yazi" ]]; then
+        [[ -L "$CONFIG_HOME/yazi/yazi.toml" ]] && rm -f "$CONFIG_HOME/yazi/yazi.toml"
+        if [[ -n "$(ls -A "$CONFIG_HOME/yazi")" ]]; then
+            mv "$CONFIG_HOME/yazi" "$CONFIG_HOME/yazi.bak"
+            echo "   Backed up existing yazi config to $CONFIG_HOME/yazi.bak"
+        else
+            rmdir "$CONFIG_HOME/yazi"
+        fi
+    fi
+    ln -sfn "$DOTFILES_DIR/yazi" "$CONFIG_HOME/yazi"
+    if command -v ya >/dev/null 2>&1; then
+        echo "==> Installing yazi plugins/flavors (ya pkg install)..."
+        ya pkg install || echo "!! yazi plugin install failed — rerun 'ya pkg install' later."
+    fi
 fi
 
 # lazygit: render diffs through difftastic (structural diff)
