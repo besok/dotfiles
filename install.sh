@@ -201,7 +201,7 @@ if ! command -v lldb-dap >/dev/null 2>&1; then
 fi
 
 # -------------------------------------------------------------------
-# 5. Python: interpreter + pylsp (jedi/mypy/rope, Helix) + ruff
+# 5. Python: interpreter + basedpyright (Helix LSP) + ruff
 # -------------------------------------------------------------------
 echo "==> Setting up Python tooling..."
 case "$PKG" in
@@ -210,14 +210,9 @@ case "$PKG" in
     pacman) install_pkgs python python-pipx ;;
 esac
 pipx ensurepath || true
-# pylsp for Helix only; Zed uses basedpyright, which it downloads itself (and
-# the Debugpy adapter on first debug). [rope] adds the rope_autoimport
-# plugin, pylsp-mypy brings in mypy for type checking. python-lsp-server has
-# no wheels for the newest CPython right after a release; fall back to 3.13.
-pipx install "python-lsp-server[rope]" --force \
-    || pipx install "python-lsp-server[rope]" --force --python 3.13 --fetch-missing-python \
-    || echo "!! python-lsp-server install failed."
-pipx inject python-lsp-server pylsp-mypy || echo "!! pylsp-mypy install failed."
+# basedpyright is the PyCharm-like LSP for Helix (zed downloads it itself);
+# the PyPI package ships both `basedpyright` (CLI) and `basedpyright-langserver`.
+pipx install basedpyright --force || echo "!! basedpyright install failed."
 pipx install ruff     --force
 
 # uv: the cargo-equivalent for Python — manages virtualenvs, dependencies,
@@ -914,8 +909,10 @@ add_function "$HOME/.bashrc"
 add_function "$HOME/.zshrc"
 
 # pm(): run a Python entrypoint with the project's .venv interpreter.
-# No args -> runs ./main.py if present. Otherwise pass the script (or
-# `-m module`) to run, e.g. `pm src/app.py` or `pm -m mypkg.cli`.
+# No args -> runs ./main.py if present. An existing file path or `-m module`
+# is passed through as-is; any other argument is a fuzzy match against the
+# project's .py files, run straight away when it matches exactly one
+# (otherwise an fzf picker opens), e.g. `pm a5.py` -> `src/a5.py`.
 add_pm_function() {
     local rc_file="$1"
     local marker="# pm(): run a Python entrypoint with the project .venv"
@@ -931,21 +928,38 @@ add_pm_function() {
 
 # pm(): run a Python entrypoint with the project .venv
 pm() {
-    local py=".venv/bin/python"
+    local root py files picked
+    root=$(command prun --root 2>/dev/null) || root=$PWD
+    py="$root/.venv/bin/python"
     if [[ ! -x "$py" ]]; then
-        echo "pm: no .venv/bin/python here — run 'pvenv' first." >&2
+        echo "pm: no .venv/bin/python in $root — run 'pvenv' first." >&2
         return 1
     fi
     if [[ $# -eq 0 ]]; then
-        if [[ -f main.py ]]; then
-            "$py" main.py
+        if [[ -f "$root/main.py" ]]; then
+            (cd "$root" && "$py" main.py)
         else
             echo "pm: no args and no ./main.py — pass a script, e.g. 'pm src/app.py'." >&2
             return 1
         fi
-    else
-        "$py" "$@"
+        return
     fi
+    if [[ $1 == -* || -f "$1" ]]; then
+        "$py" "$@"
+        return
+    fi
+    files=$(cd "$root" && find . \( -name '.?*' -o -name venv -o -name node_modules \
+        -o -name __pycache__ -o -name build -o -name dist \) -prune \
+        -o -type f -name '*.py' -print0 | tr '\0' '\n' | sed 's|^\./||' | sort)
+    [[ -n "$files" ]] || { echo "pm: no .py files found under $root" >&2; return 1; }
+    picked=$(printf '%s\n' "$files" | grep -F -- "$1")
+    [[ $(printf '%s\n' "$picked" | grep -c .) -eq 1 ]] || picked=""
+    if [[ -z "$picked" ]]; then
+        picked=$(printf '%s\n' "$files" | fzf --height 40% --reverse \
+            --prompt 'run> ' --query "$1") || return
+    fi
+    [[ -n "$picked" ]] || return
+    (cd "$root" && "$py" "$picked")
 }
 EOF
     fi

@@ -1,47 +1,34 @@
 # -----------------------------------------------------------------
-# Python — pylsp (jedi + mypy + rope) + ruff (lint & format)
-# Zed uses basedpyright instead (zed/settings.json). install.sh puts `pylsp` (with
-# pylsp-mypy and rope) and `ruff` on PATH via pipx.
+# Python — basedpyright (types, nav, completions) + ruff (lint & format)
+# Mirrors the Zed setup (zed/settings.json): basedpyright is the PyCharm-like
+# engine, ruff handles lint, import sorting and formatting. install.sh puts
+# `basedpyright` and `ruff` on PATH via pipx.
 # -----------------------------------------------------------------
 [[language]]
 name = "python"
-language-servers = ["pylsp", "ruff"]
+language-servers = ["basedpyright", "ruff"]
 auto-format = true
 formatter = { command = "ruff", args = ["format", "-"] }
 
-[language-server.pylsp]
-command = "pylsp"
+[language-server.basedpyright]
+command = "basedpyright-langserver"
+args = ["--stdio"]
 
-# Linters/formatters superseded by `ruff server` below.
-[language-server.pylsp.config.pylsp.plugins]
-autopep8 = { enabled = false }
-black = { enabled = false }
-flake8 = { enabled = false }
-isort = { enabled = false }
-mccabe = { enabled = false }
-pycodestyle = { enabled = false }
-pydocstyle = { enabled = false }
-pyflakes = { enabled = false }
-pylint = { enabled = false }
-yapf = { enabled = false }
-ruff = { enabled = false }
-# jedi_* (completion, hover, goto, references) are on by default. jedi follows
-# $VIRTUAL_ENV, so start hx from an activated venv (or `uv run hx`) to resolve
-# third-party imports. rope_autoimport adds "import X" code actions;
-# rope_completion stays off because it duplicates jedi's list.
-rope_autoimport = { enabled = true, completions = { enabled = false }, code_actions = { enabled = true } }
-
-# Type checking via mypy. mypy runs with pylsp's own interpreter, so to see a
-# project's packages point it at the venv from a project-local
-# .helix/languages.toml:
-#   [language-server.pylsp.config.pylsp.plugins.pylsp_mypy]
-#   overrides = ["--python-executable", ".venv/bin/python", true]
-# live_mode re-runs mypy on every change; on big projects switch to
-# dmypy = true, live_mode = false.
-[language-server.pylsp.config.pylsp.plugins.pylsp_mypy]
-enabled = true
-live_mode = true
-report_progress = true
+# PyCharm-like defaults (see zed/settings.json): "standard" type-checking mode,
+# analyse open files only, auto-import completions, and the same inlay hints.
+# Import sorting is ruff's job (disableOrganizeImports). A project's
+# pyproject.toml [tool.basedpyright] or pyrightconfig.json overrides these.
+[language-server.basedpyright.config]
+basedpyright.disableOrganizeImports = true
+basedpyright.analysis.typeCheckingMode = "standard"
+basedpyright.analysis.diagnosticMode = "openFilesOnly"
+basedpyright.analysis.autoImportCompletions = true
+basedpyright.analysis.autoSearchPaths = true
+basedpyright.analysis.useLibraryCodeForTypes = true
+basedpyright.analysis.inlayHints.variableTypes = true
+basedpyright.analysis.inlayHints.functionReturnTypes = true
+basedpyright.analysis.inlayHints.callArgumentNames = true
+basedpyright.analysis.inlayHints.genericTypes = false
 
 # `ruff server`: lint + format + import sorting; a project's pyproject.toml /
 # ruff.toml wins over these settings.
