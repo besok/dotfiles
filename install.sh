@@ -455,6 +455,14 @@ if [[ "$OS" == "Darwin" ]]; then
     fi
 fi
 
+# Append a line to an rc file unless it's already there (idempotent).
+add_line() {
+    local rc_file="$1" line="$2"
+    if [[ -f "$rc_file" ]] && ! grep -Fq "$line" "$rc_file"; then
+        echo "$line" >> "$rc_file"
+    fi
+}
+
 # macOS only exports LC_CTYPE=UTF-8 to terminals. bash 5.x then warns
 # "setlocale: LC_COLLATE: cannot change locale ()" on every prompt, and any
 # long-lived process started from that shell (the Zellij server) inherits the
@@ -466,13 +474,6 @@ if [[ "$OS" == "Darwin" ]]; then
 else
     add_line "$HOME/.bashrc" "$LOCALE_LINE"
 fi
-
-add_line() {
-    local rc_file="$1" line="$2"
-    if [[ -f "$rc_file" ]] && ! grep -Fq "$line" "$rc_file"; then
-        echo "$line" >> "$rc_file"
-    fi
-}
 
 # bash-completion: make targets, ssh hosts, git subcommands, etc. Loaded
 # first so tools that wrap existing completions (fzf --bash wraps ssh's)
