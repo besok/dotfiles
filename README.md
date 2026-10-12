@@ -396,7 +396,6 @@ on top of the Helix defaults (in `helix/config.toml`):
 | `Ctrl-q` | Quit (`:q`) |
 | `space`  | Picker menu (`space` → file picker, `space b` → buffer picker, `w` → save, `q` → quit) |
 | `space B`| Git blame the current line — prints the commit/author that last touched it to the statusline |
-| `m`      | Render the current markdown file through `glow` |
 | `Ctrl-e` | Open the current file in VS Code at the cursor line (`code -g`) |
 
 Note: `Ctrl-e` runs in the foreground, so Helix suspends until you close

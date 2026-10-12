@@ -58,10 +58,6 @@ C-q = ":q"
 # space map is fully redefined below). space B: git blame for the current
 # line — prints the commit/author that last touched it to the statusline.
 "space" = { "space" = "file_picker", "w" = ":w", "q" = ":q", "b" = "buffer_picker", "B" = ":echo %sh{git blame -L %{cursor_line},+1 %{buffer_name}}" }
-# Quick markdown render: pipes current file through glow in a pager.
-# Requires Helix >= 24.03 for the %{buffer_name} expansion; if your
-# version is older, use Ctrl-z to suspend and run `glow -p file.md` by hand.
-m = ":sh glow -p %{buffer_name}"
 C-e = ":sh code -g %{buffer_name}:%{cursor_line}"
 
 [keys.insert]
