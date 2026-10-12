@@ -57,7 +57,7 @@ dotfiles/
 
 | Language | LSP           | Formatter / linter    | Debugger (DAP) |
 |----------|---------------|-------------------------|-----------------|
-| Python   | pylsp (jedi, mypy, rope) | ruff (format + lint) | — (add `debugpy` if you need it) |
+| Python   | basedpyright | ruff (format + lint) | — (add `debugpy` if you need it) |
 | Rust     | rust-analyzer | rustfmt, clippy on save | lldb-dap        |
 | Zig      | zls           | `zig fmt`                | — (zls doesn't ship DAP support yet) |
 | C++      | clangd        | clang-tidy (via clangd) | lldb-dap        |
@@ -77,15 +77,15 @@ Mostly no — the global config handles the LSPs/formatters automatically:
 
 - **Rust**: nothing extra. `cargo new` gives rust-analyzer everything it needs.
 - **Zig**: works as soon as `zls` is on your `PATH`.
-- **Python**: in Zed, basedpyright and the Debugpy debugger use the `.venv`
-  Zed detects in the project automatically (toolchain picker in the status
-  bar if there are several). In Helix, start `hx` from an
-  activated venv (or `uv run hx`) so jedi resolves third-party imports, and to
-  let mypy see them too add a project-local `.helix/languages.toml`:
+- **Python**: basedpyright (Helix) and the Debugpy debugger (Zed) use the
+  `.venv` detected in the project automatically — Zed via its status-bar
+  toolchain picker, basedpyright via `autoSearchPaths` plus the interpreter it
+  finds in the project. To point basedpyright at a specific interpreter, add
+  a project-local `.helix/languages.toml`:
 
   ```toml
-  [language-server.pylsp.config.pylsp.plugins.pylsp_mypy]
-  overrides = ["--python-executable", ".venv/bin/python", true]
+  [language-server.basedpyright.config]
+  python.pythonPath = ".venv/bin/python"
   ```
 - **C / C++**: this is the one exception — clangd needs a
   `compile_commands.json` per project to know your include paths and flags.
@@ -144,10 +144,11 @@ settings in `zed/settings.json` are symlinked to `~/.config/zed/settings.json`
   state to think about. Formatting (rustfmt/ruff) only runs on an explicit
   Cmd-S so autosave never rewrites what you are typing.
 - rust-analyzer runs **clippy** on check. Python is set up to feel like
-  **PyCharm**: **basedpyright** (Zed downloads it) for go-to-definition,
-  find usages, rename, auto-import completions, inlay type hints and type
-  checking at PyCharm's "standard" strictness, plus **ruff** for lint,
-  import sorting and formatting. Helix keeps pylsp instead.
+  **PyCharm**: **basedpyright** for go-to-definition, find usages, rename,
+  auto-import completions, inlay type hints and type checking at PyCharm's
+  "standard" strictness, plus **ruff** for lint, import sorting and
+  formatting — the same pair in both Helix and Zed (Zed downloads its own
+  basedpyright; `install.sh` puts Helix's copy on `PATH` via pipx).
 - **Run / debug like PyCharm**: `zed/tasks.json` holds run configurations
   (run file or module with `uv run`, pytest for the file, the whole suite or
   the test under the cursor, ruff), `zed/debug.json` the matching Debugpy
@@ -276,7 +277,7 @@ Python aliases (the cargo-equivalent workflow). They work in **Poetry** and
 | `pw`    | Run tests on every save (`prun ptw .`, via pytest-watcher) |
 | `ptk`   | Fuzzy-pick test(s) with fzf and run them (`ptk login` pre-fills the query, Tab multi-selects, `ptk -c` lists parametrized ids) |
 | `ptf`   | Run all tests in one file by name (`ptf login` → `tests/test_login.py`; ambiguous or no name opens an fzf file picker) |
-| `pm`    | Run a Python entrypoint via `.venv/bin/python` (defaults to `main.py`) |
+| `pm`    | Run a Python entrypoint via `.venv/bin/python` (defaults to `main.py`); `pm a5.py` fuzzy-matches the file name, `pm -m pkg.cli` runs a module |
 
 `ptk` lists test node ids (`tests/test_x.py::TestA::test_b`) from a static scan
 of the `test_*.py` / `*_test.py` files, which takes ~0.2s where
