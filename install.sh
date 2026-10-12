@@ -601,11 +601,7 @@ has_func() {
     grep -Eq "^[[:space:]]*(function[[:space:]]+)?${name}[[:space:]]*\(\)" "$rc_file" 2>/dev/null
 }
 
-# Add zellij layout aliases to rc files.
-# Each layout gets a named session (dev/rsdev/pydev): the alias reattaches if
-# the session is already running and only creates it (with the layout) when it
-# isn't, so closing the terminal never leaks a fresh randomly-named server.
-# kill_devs force-deletes all three so you can clean up at the end of the day.
+# Generic "append this alias line once" helper for the cargo/ruff aliases.
 add_alias() {
     local rc_file="$1" alias_cmd="$2" name
     name="${alias_cmd#alias }"; name="${name%%=*}"
@@ -619,12 +615,68 @@ add_alias() {
     fi
 }
 
-for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
-    add_alias "$rc" "alias dev='zellij attach --create dev options --default-layout dev'"
-    add_alias "$rc" "alias rsdev='zellij attach --create rsdev options --default-layout rsdev'"
-    add_alias "$rc" "alias pydev='zellij attach --create pydev options --default-layout pydev'"
-    add_alias "$rc" "alias kill_devs='for s in dev rsdev pydev; do zellij delete-session --force \"\$s\" 2>/dev/null; done; zellij delete-all-sessions --yes 2>/dev/null'"
-done
+# zdev block: per-project zellij sessions.
+# dev/rsdev/pydev name the session "<layout>-<current folder>" (non
+# [A-Za-z0-9_.-] characters become "-"), so each project gets its own
+# session: re-running the function in the same folder reattaches (panes,
+# builds and the llms tab survive), running it elsewhere starts a fresh one
+# with the layout applied to that folder. kill_devs force-deletes every
+# session whose name starts with dev-/rsdev-/pydev- (plus the bare dev/
+# rsdev/pydev sessions left by older installs) and then sweeps the exited
+# ones. The block is replaced on every run so it stays current.
+add_zdev_function() {
+    local rc_file="$1"
+    local marker="# zdev: per-project zellij sessions"
+    if [[ -f "$rc_file" ]]; then
+        # Older installs used plain aliases with a fixed session name; drop
+        # them (an `alias dev` left in place would break parsing `dev() {`).
+        local old
+        for old in \
+            "alias dev='zellij --layout dev'" \
+            "alias rsdev='zellij --layout rsdev'" \
+            "alias pydev='zellij --layout pydev'" \
+            "alias dev='zellij attach --create dev options --default-layout dev'" \
+            "alias rsdev='zellij attach --create rsdev options --default-layout rsdev'" \
+            "alias pydev='zellij attach --create pydev options --default-layout pydev'" \
+            "alias kill_devs='for s in dev rsdev pydev; do zellij delete-session --force \"\$s\" 2>/dev/null; done; zellij delete-all-sessions --yes 2>/dev/null'"
+        do
+            if grep -Fxq -- "$old" "$rc_file"; then
+                grep -Fvx -- "$old" "$rc_file" > "$rc_file.tmp" && mv "$rc_file.tmp" "$rc_file"
+            fi
+        done
+        if grep -Fq "$marker" "$rc_file"; then
+            sed -i.bak '/^# zdev: per-project zellij sessions/,/^# zdev: end$/d' "$rc_file"
+        fi
+        if has_func "$rc_file" "dev" || has_func "$rc_file" "kill_devs"; then
+            echo "   skip zdev block — $rc_file already defines its own dev()/kill_devs()"
+            return 0
+        fi
+        echo "==> Adding per-project zellij functions (dev, rsdev, pydev, kill_devs) to $rc_file"
+        cat >> "$rc_file" <<'EOF'
+
+# zdev: per-project zellij sessions (dev rsdev pydev kill_devs) — dotfiles
+unalias dev rsdev pydev kill_devs 2>/dev/null
+_zdev() {
+    local name; name="$(printf '%s' "${PWD##*/}" | tr -c 'A-Za-z0-9_.-' '-')"
+    zellij attach --create "$1-$name" options --default-layout "$1"
+}
+dev()   { _zdev dev; }
+rsdev() { _zdev rsdev; }
+pydev() { _zdev pydev; }
+kill_devs() {
+    local s
+    for s in $(zellij list-sessions --short 2>/dev/null | grep -E '^(dev|rsdev|pydev)(-|$)'); do
+        zellij delete-session --force "$s" 2>/dev/null
+    done
+    zellij delete-all-sessions --yes 2>/dev/null
+}
+# zdev: end
+EOF
+        rm -f "$rc_file.bak"
+    fi
+}
+add_zdev_function "$HOME/.bashrc"
+add_zdev_function "$HOME/.zshrc"
 
 # -------------------------------------------------------------------
 # Rust / cargo aliases — compact-output build loop

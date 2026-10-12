@@ -202,43 +202,50 @@ cd ~/some-project
 dev
 ```
 
-`dev` is an alias (`zellij attach --create dev options --default-layout dev`)
-added to your shell rc by `install.sh`. It attaches to a session named `dev`
-if one is already running, and only creates it (with the `dev` layout) when
-it isn't — so your panes, running builds, and the `llms` tab pick up right
-where you left off, and closing the terminal never leaks a fresh
-randomly-named session. Note that the layout is applied only on creation and
-the session is shared across directories: run `kill_devs` first if you want a
-clean `dev` session in a different project.
+`dev` is a shell function added to your rc file by `install.sh`. It runs
+`zellij attach --create dev-<folder> options --default-layout dev`, where
+`<folder>` is the name of the current directory (characters outside
+`A-Za-z0-9_.-` become `-`), so each project gets its own session:
+`dev` in `~/Projects/api` gives `dev-api`, in `~/Projects/web` gives
+`dev-web`. Running it again in the same folder reattaches — your panes,
+running builds, and the `llms` tab pick up right where you left off — and
+running it in a different project starts a fresh session with the layout
+applied there. Closing the terminal never leaks a randomly-named session.
+The layout is applied only on creation: to re-apply it, `kill_devs` and run
+`dev` again.
 
-`kill_devs` force-deletes the `dev`, `rsdev` and `pydev` sessions and then
-sweeps any exited sessions, so `zellij list-sessions` stays short.
+`kill_devs` force-deletes every session named `dev-*`, `rsdev-*` or
+`pydev-*` (across all projects, plus the bare `dev`/`rsdev`/`pydev` ones left
+by older installs) and then sweeps any exited sessions, so
+`zellij list-sessions` stays short.
 
 If you'd rather launch straight from your desktop instead of an existing
 terminal, open Alacritty (maximized, light Catppuccin Latte colors) and
 run `dev` inside it — same result.
 
-For Rust projects, use `rsdev` instead — it's the same wrapper but opens the
-`rsdev` layout. There's no `console` tab; instead the `ops` tab is a 2×2 grid
+For Rust projects, use `rsdev` instead — it's the same wrapper but names the
+session `rsdev-<folder>` and opens the `rsdev` layout. There's no `console` tab; instead the `ops` tab is a 2×2 grid
 of four consoles — single test (`rt`), run (`cr`), full test suite
 (`ct`/`cargo test`), and `clippy` (`ccl`) — all run manually.
 
-For Python projects, use `pydev` — the same idea, but its `ops` tab is a 2×2
-grid of four consoles: single test (`ptk`), run (`pm`), full test suite
+For Python projects, use `pydev` — the same idea (`pydev-<folder>`), but
+its `ops` tab is a 2×2 grid of four consoles: single test (`ptk`), run (`pm`), full test suite
 (`pt`), and lint (`pl`).
 
 In both layouts the `editor` tab is just Helix (no console), like `dev`.
 
 ## Useful commands
 
-These aliases and functions are added to `~/.bashrc` / `~/.zshrc` by
-`install.sh`:
+These functions and aliases are added to `~/.bashrc` / `~/.zshrc` by
+`install.sh` (the zellij ones live in a `# zdev:` block, replaced on each
+run):
 
 | Command | What it does |
 |---------|--------------|
-| `dev`   | Open a Zellij session with the `dev` layout (named after the current folder) |
-| `rsdev` | Same, but with the `rsdev` layout (adds an `ops` tab) |
-| `pydev` | Same, but with the `pydev` layout (adds a Python `ops` tab) |
+| `dev`   | Attach to (or create) the `dev-<folder>` Zellij session for the current project, `dev` layout |
+| `rsdev` | Same, `rsdev-<folder>` with the `rsdev` layout (adds an `ops` tab) |
+| `pydev` | Same, `pydev-<folder>` with the `pydev` layout (adds a Python `ops` tab) |
+| `kill_devs` | Delete all `dev-*`/`rsdev-*`/`pydev-*` sessions, then sweep exited ones |
 | `y`     | Launch yazi; on quit, `cd` to wherever you navigated to |
 | `mdp`   | Live markdown preview (glow + entr) |
 

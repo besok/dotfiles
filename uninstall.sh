@@ -155,6 +155,11 @@ for rc in "${rcs[@]}"; do
         strip_range "$rc" '# pyproj: Poetry/uv project tooling'
     fi
     strip_range "$rc" '# pm(): run a Python'
+    # zdev block (per-project dev/rsdev/pydev/kill_devs functions).
+    if grep -Fq "# zdev: per-project zellij sessions" "$rc" 2>/dev/null; then
+        sed_i '/^# zdev: per-project zellij sessions/,/^# zdev: end$/d' "$rc"
+        echo "   stripped # zdev: per-project zellij sessions ... from $rc"
+    fi
 done
 
 # macOS: install.sh chains ~/.bash_profile -> ~/.bashrc.
